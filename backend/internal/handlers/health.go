@@ -53,6 +53,8 @@ func (h *HealthHandler) Check(w http.ResponseWriter, r *http.Request) {
 
 	// Límite de 2 segundos: un healthcheck lento es tan malo como uno fallido.
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	//libera el temporizador interno del contexto cuando la funcion termina, aunque el ping haya
+	//respondido en 2ms
 	defer cancel()
 
 	if err := h.db.Ping(ctx); err != nil {

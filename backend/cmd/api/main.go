@@ -45,11 +45,6 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// -------------------------------------------------------------------------
-	// PASO FINAL (tu parte): descomenta este bloque cuando hayas escrito
-	// database.Connect, y cambia NewHealthHandler(nil) por NewHealthHandler(pool).
-	// No olvides agregar "examen-coppel/backend/internal/database" a los imports.
-	// -------------------------------------------------------------------------
 	pool, err := database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return err

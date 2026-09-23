@@ -1,0 +1,6 @@
+# Archivos que NO se envían a Docker al construir la imagen
+# (builds más rápidos y sin filtrar secretos dentro de la imagen).
+.env
+*.exe
+*.test
+tmp/

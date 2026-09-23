@@ -1,0 +1,20 @@
+# Secretos y configuración local
+.env
+
+# Binarios y artefactos de Go
+backend/api
+backend/tmp/
+*.exe
+*.test
+*.out
+
+# Angular (se agregará el sábado)
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Editores y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

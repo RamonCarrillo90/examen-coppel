@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"examen-coppel/backend/internal/config"
+	"examen-coppel/backend/internal/database"
 	"examen-coppel/backend/internal/handlers"
 	"examen-coppel/backend/internal/router"
-	"examen-coppel/backend/internal/database"
 )
 
 func main() {

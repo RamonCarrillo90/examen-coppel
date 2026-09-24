@@ -1,0 +1,83 @@
+@baseUrl = http://localhost:8080/api
+
+### Health
+GET {{baseUrl}}/health
+
+### Login correcto → 200 con token y usuario
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "admin123"
+}
+
+### Contraseña incorrecta → 401 "credenciales inválidas"
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "incorrecta"
+}
+
+### Email que no existe → 401 con el MISMO mensaje
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "nadie@example.com",
+  "password": "loquesea123"
+}
+
+### Tipo incorrecto → 400
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": 5
+}
+
+### Campo que no existe → 400 (DisallowUnknownFields)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "x",
+  "extra": 1
+}
+
+### ─────────────────────────────────────────────
+### Sesión actual: GET /api/auth/me
+### ─────────────────────────────────────────────
+
+### Login para obtener un token (se guarda como "login")
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "admin123"
+}
+
+### /me sin header Authorization → 401 "no autenticado"
+GET {{baseUrl}}/auth/me
+
+### /me con un token inventado → 401 "token inválido o expirado"
+GET {{baseUrl}}/auth/me
+Authorization: Bearer abc
+
+### /me sin el prefijo "Bearer " → 401 "no autenticado"
+GET {{baseUrl}}/auth/me
+Authorization: {{login.response.body.token}}
+
+### /me con el token del login → 200 con el usuario admin
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{login.response.body.token}}
+
+### /me con un token modificado → 401 (la firma ya no coincide)
+# Copia aquí el token del login y cambia UN carácter de la parte del medio
+GET {{baseUrl}}/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2wiOiJhZG1pbiIsInN1YiI6IjEiLCpleHAiOjE3OTAyNTY2MTIsImlhdCI6MTc5MDIyNzgxMn0.T2j7zCvBV8W8I2kSxvZjFqZAaGeSyXacCqcx552VKkY

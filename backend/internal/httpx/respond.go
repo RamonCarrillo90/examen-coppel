@@ -1,4 +1,5 @@
-package handlers
+// Package httpx contiene ayudantes para responder y leer JSON en HTTP
+package httpx
 
 import (
 	"encoding/json"
@@ -14,8 +15,8 @@ type errorResponse struct {
 	Error string `json:"error"`
 }
 
-// writeJSON serializa data como JSON y lo escribe con el código HTTP indicado.
-func writeJSON(w http.ResponseWriter, status int, data any) {
+// WriteJSON serializa data como JSON y lo escribe con el código HTTP indicado.
+func WriteJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 
@@ -28,15 +29,15 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 	}
 }
 
-// decodeJSON lee el cuerpo de la petición como JSON en dst, con límites de seguridad.
-func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+// DecodeJSON lee el cuerpo de la petición como JSON en dst, con límites de seguridad.
+func DecodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // máximo 1 MB
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields() // rechaza campos que no existen en el DTO
 	return dec.Decode(dst)
 }
 
-// writeError envía un error con el formato estándar de la API.
-func writeError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, errorResponse{Error: message})
+// WriteError envía un error con el formato estándar de la API.
+func WriteError(w http.ResponseWriter, status int, message string) {
+	WriteJSON(w, status, errorResponse{Error: message})
 }

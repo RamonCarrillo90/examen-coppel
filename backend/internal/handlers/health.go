@@ -4,6 +4,7 @@ package handlers
 
 import (
 	"context"
+	"examen-coppel/backend/internal/httpx"
 	"net/http"
 	"time"
 )
@@ -44,7 +45,7 @@ type healthResponse struct {
 //   - 503 (Service Unavailable) si no hay conexión o el ping falla.
 func (h *HealthHandler) Check(w http.ResponseWriter, r *http.Request) {
 	if h.db == nil {
-		writeJSON(w, http.StatusServiceUnavailable, healthResponse{
+		httpx.WriteJSON(w, http.StatusServiceUnavailable, healthResponse{
 			Status:   "degradado",
 			Database: "sin conectar",
 		})
@@ -58,12 +59,12 @@ func (h *HealthHandler) Check(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	if err := h.db.Ping(ctx); err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, healthResponse{
+		httpx.WriteJSON(w, http.StatusServiceUnavailable, healthResponse{
 			Status:   "degradado",
 			Database: "error",
 		})
 		return
 	}
 
-	writeJSON(w, http.StatusOK, healthResponse{Status: "ok", Database: "ok"})
+	httpx.WriteJSON(w, http.StatusOK, healthResponse{Status: "ok", Database: "ok"})
 }

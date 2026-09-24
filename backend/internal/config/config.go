@@ -15,6 +15,12 @@ type Config struct {
 	// DatabaseURL es la cadena de conexión a PostgreSQL, por ejemplo:
 	// postgres://usuario:clave@db:5432/nombre_bd?sslmode=disable
 	DatabaseURL string
+	//JWTSecret es la clave secreta que valida los tokens
+	JWTSecret string
+	//AdminEmail guarda el email del usuario de rol admin
+	AdminEmail string
+	//AdminPassword guarda la contraseña del admin
+	AdminPassword string
 }
 
 // Load lee las variables de entorno y valida que las obligatorias existan.
@@ -22,8 +28,11 @@ type Config struct {
 // con un mensaje confuso.
 func Load() (*Config, error) {
 	cfg := &Config{
-		Port:        getEnv("PORT", "8080"),
-		DatabaseURL: os.Getenv("DATABASE_URL"),
+		Port:          getEnv("PORT", "8080"),
+		DatabaseURL:   os.Getenv("DATABASE_URL"),
+		JWTSecret:     os.Getenv("JWT_SECRET"),
+		AdminEmail:    os.Getenv("ADMIN_EMAIL"),
+		AdminPassword: os.Getenv("ADMIN_PASSWORD"),
 	}
 
 	if cfg.DatabaseURL == "" {

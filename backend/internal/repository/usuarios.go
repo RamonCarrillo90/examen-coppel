@@ -1,4 +1,4 @@
-// Package repository encapsula el acceso a postgreSQL es la unica capa de la aplicacioin que ejecuta Sql
+// Package repository encapsula el acceso a postgreSQL es la unica capa de la aplicacion que ejecuta Sql
 package repository
 
 import (

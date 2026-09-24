@@ -19,7 +19,9 @@ import (
 	"examen-coppel/backend/internal/config"
 	"examen-coppel/backend/internal/database"
 	"examen-coppel/backend/internal/handlers"
+	"examen-coppel/backend/internal/repository"
 	"examen-coppel/backend/internal/router"
+	"examen-coppel/backend/internal/seed"
 )
 
 func main() {
@@ -51,6 +53,11 @@ func run() error {
 	}
 	defer pool.Close()
 	slog.Info("conectado a PostgreSQL")
+
+	usuarioRepo := repository.NewUsuarioRepository(pool)
+	if err := seed.CrearAdminSiNoExiste(ctx, usuarioRepo, cfg.AdminEmail, cfg.AdminPassword); err != nil {
+		return err
+	}
 
 	healthHandler := handlers.NewHealthHandler(pool)
 

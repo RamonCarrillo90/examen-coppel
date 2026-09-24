@@ -12,14 +12,15 @@ import (
 //
 // Desde Go 1.22, http.ServeMux entiende el método y los parámetros en la
 // ruta ("GET /api/usuarios/{id}"), así que no necesitamos un framework.
-func New(health *handlers.HealthHandler) http.Handler {
+func New(healthHandler *handlers.HealthHandler, authHandler *handlers.AuthHandler) http.Handler {
+
 	mux := http.NewServeMux()
 
 	// --- Sistema -------------------------------------------------------------
-	mux.HandleFunc("GET /api/health", health.Check)
+	mux.HandleFunc("GET /api/health", healthHandler.Check)
 
 	// --- Autenticación (jueves) ----------------------------------------------
-	// mux.HandleFunc("POST /api/auth/login", ...)
+	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 	// mux.HandleFunc("GET /api/auth/me", ...)
 
 	// --- Usuarios (jueves) ---------------------------------------------------

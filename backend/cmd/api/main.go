@@ -60,10 +60,11 @@ func run() error {
 	}
 
 	healthHandler := handlers.NewHealthHandler(pool)
+	authHandler := handlers.NewAuthHandler(usuarioRepo, []byte(cfg.JWTSecret))
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.Port,
-		Handler: router.New(healthHandler),
+		Handler: router.New(healthHandler, authHandler),
 		// Timeouts: sin ellos, un cliente lento puede mantener conexiones
 		// abiertas indefinidamente y agotar los recursos del servidor al hacer un ataque slowloris
 		ReadHeaderTimeout: 5 * time.Second,

@@ -1,4 +1,4 @@
-// auth es el paquete que verificara que las contraseñas esten bien hasheadas
+// Package auth agrupa la autenticación: hash de contraseñas y tokens JWT.
 package auth
 
 import (

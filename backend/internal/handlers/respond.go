@@ -28,6 +28,14 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 	}
 }
 
+// decodeJSON lee el cuerpo de la petición como JSON en dst, con límites de seguridad.
+func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // máximo 1 MB
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields() // rechaza campos que no existen en el DTO
+	return dec.Decode(dst)
+}
+
 // writeError envía un error con el formato estándar de la API.
 func writeError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, errorResponse{Error: message})

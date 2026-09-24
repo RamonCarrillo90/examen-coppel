@@ -7,7 +7,8 @@ type claveContexto string
 
 const claveClaims claveContexto = "claims"
 
-// ConClaims devuelve una copia de ctx que lleva los claims del usuario autenticado.
+// ConClaims devuelve una copia de ctx que lleva los claims del usuario autenticado.}
+// Guarda los claims para posteriormente soltarlos en ClaimsdesdeContexto
 func ConClaims(ctx context.Context, c *Claims) context.Context {
 	return context.WithValue(ctx, claveClaims, c)
 }

@@ -12,7 +12,7 @@ import (
 //
 // Desde Go 1.22, http.ServeMux entiende el método y los parámetros en la
 // ruta ("GET /api/usuarios/{id}"), así que no necesitamos un framework.
-func New(healthHandler *handlers.HealthHandler, authHandler *handlers.AuthHandler, jwtSecret []byte) http.Handler {
+func New(healthHandler *handlers.HealthHandler, authHandler *handlers.AuthHandler, usuarioHandler *handlers.UsuarioHandler, jwtSecret []byte) http.Handler {
 
 	mux := http.NewServeMux()
 
@@ -27,11 +27,12 @@ func New(healthHandler *handlers.HealthHandler, authHandler *handlers.AuthHandle
 	mux.Handle("GET /api/auth/me", autenticado(http.HandlerFunc(authHandler.Me))) // privado
 
 	// --- Usuarios (jueves) ---------------------------------------------------
-	// mux.HandleFunc("GET /api/usuarios", ...)
-	// mux.HandleFunc("GET /api/usuarios/{id}", ...)
-	// mux.HandleFunc("POST /api/usuarios", ...)
-	// mux.HandleFunc("PUT /api/usuarios/{id}", ...)
-	// mux.HandleFunc("DELETE /api/usuarios/{id}", ...)
+	//la regla es: sin middlewares handleFunc con middlewares = Handle
+	mux.Handle("GET /api/usuarios", autenticado(RequireAdmin(http.HandlerFunc(usuarioHandler.Listar))))
+	mux.Handle("GET /api/usuarios/{id}", autenticado(http.HandlerFunc(usuarioHandler.Obtener)))
+	mux.Handle("POST /api/usuarios", autenticado(RequireAdmin(http.HandlerFunc(usuarioHandler.Crear))))
+	mux.Handle("PUT /api/usuarios/{id}", autenticado(http.HandlerFunc(usuarioHandler.Actualizar)))
+	mux.Handle("DELETE /api/usuarios/{id}", autenticado(RequireAdmin(http.HandlerFunc(usuarioHandler.Eliminar))))
 
 	// --- Tareas (viernes) ----------------------------------------------------
 	// mux.HandleFunc("POST /api/usuarios/{id}/tareas", ...)

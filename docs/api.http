@@ -2,8 +2,8 @@
 
 ### Health
 GET {{baseUrl}}/health
-
-### Login correcto → 200 con token y usuario
+### Login correcto → 200 con token y usuario (se guarda como "login")
+# @name login
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
@@ -52,16 +52,6 @@ Content-Type: application/json
 ### Sesión actual: GET /api/auth/me
 ### ─────────────────────────────────────────────
 
-### Login para obtener un token (se guarda como "login")
-# @name login
-POST {{baseUrl}}/auth/login
-Content-Type: application/json
-
-{
-  "email": "admin@gmail.com",
-  "password": "admin123"
-}
-
 ### /me sin header Authorization → 401 "no autenticado"
 GET {{baseUrl}}/auth/me
 
@@ -81,3 +71,132 @@ Authorization: Bearer {{login.response.body.token}}
 # Copia aquí el token del login y cambia UN carácter de la parte del medio
 GET {{baseUrl}}/auth/me
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2wiOiJhZG1pbiIsInN1YiI6IjEiLCpleHAiOjE3OTAyNTY2MTIsImlhdCI6MTc5MDIyNzgxMn0.T2j7zCvBV8W8I2kSxvZjFqZAaGeSyXacCqcx552VKkY
+
+### ═════════════════════════════════════════════
+### CRUD DE USUARIOS
+### Ejecutar EN ORDEN, de arriba hacia abajo.
+### Requiere haber ejecutado antes el "login" del admin.
+### ═════════════════════════════════════════════
+
+### ── Como ADMIN ──────────────────────────────────
+
+### 1. Crear un usuario normal → 201 (guarda la respuesta como "nuevo")
+# @name nuevo
+POST {{baseUrl}}/usuarios
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "nombre": "Ana",
+  "apellido": "López",
+  "email": "ana.lopez@example.com",
+  "telefono": "6671234567",
+  "password": "ana12345",
+  "rol": "usuario"
+}
+
+### 2. Crear otro con el MISMO email → 409
+POST {{baseUrl}}/usuarios
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "nombre": "Otra",
+  "apellido": "Persona",
+  "email": "ana.lopez@example.com",
+  "password": "otra12345"
+}
+
+### 3. Crear con email inválido → 400
+POST {{baseUrl}}/usuarios
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "nombre": "Prueba",
+  "apellido": "Email",
+  "email": "hola",
+  "password": "prueba123"
+}
+
+### 4. Crear con contraseña corta → 400
+POST {{baseUrl}}/usuarios
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "nombre": "Prueba",
+  "apellido": "Password",
+  "email": "prueba.password@example.com",
+  "password": "123"
+}
+
+### 5. Listar → 200 con 2 usuarios, sin password_hash
+GET {{baseUrl}}/usuarios
+Authorization: Bearer {{login.response.body.token}}
+
+### ── Como USUARIO NORMAL (Ana) ───────────────────
+
+### 6. Login como Ana (guarda la respuesta como "loginAna")
+# @name loginAna
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ana.lopez@example.com",
+  "password": "ana12345"
+}
+
+### 7. Ana lista todos los usuarios → 403
+GET {{baseUrl}}/usuarios
+Authorization: Bearer {{loginAna.response.body.token}}
+
+### 8. Ana se consulta a sí misma → 200
+GET {{baseUrl}}/usuarios/{{nuevo.response.body.id}}
+Authorization: Bearer {{loginAna.response.body.token}}
+
+### 9. Ana consulta al admin → 403
+GET {{baseUrl}}/usuarios/{{login.response.body.usuario.id}}
+Authorization: Bearer {{loginAna.response.body.token}}
+
+### 10. Ana cambia su nombre → 200
+PUT {{baseUrl}}/usuarios/{{nuevo.response.body.id}}
+Authorization: Bearer {{loginAna.response.body.token}}
+Content-Type: application/json
+
+{
+  "nombre": "Ana María",
+  "apellido": "López",
+  "email": "ana.lopez@example.com",
+  "telefono": "6671234567"
+}
+
+### 11. Ana intenta hacerse admin → 403
+PUT {{baseUrl}}/usuarios/{{nuevo.response.body.id}}
+Authorization: Bearer {{loginAna.response.body.token}}
+Content-Type: application/json
+
+{
+  "nombre": "Ana María",
+  "apellido": "López",
+  "email": "ana.lopez@example.com",
+  "rol": "admin"
+}
+
+### 12. Ana intenta eliminar al admin → 403
+DELETE {{baseUrl}}/usuarios/{{login.response.body.usuario.id}}
+Authorization: Bearer {{loginAna.response.body.token}}
+
+### ── De nuevo como ADMIN ─────────────────────────
+
+### 13. El admin se intenta eliminar a sí mismo → 400
+DELETE {{baseUrl}}/usuarios/{{login.response.body.usuario.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### 14. El admin elimina a Ana → 204
+DELETE {{baseUrl}}/usuarios/{{nuevo.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### 15. Consultar a Ana ya eliminada → 404
+GET {{baseUrl}}/usuarios/{{nuevo.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}

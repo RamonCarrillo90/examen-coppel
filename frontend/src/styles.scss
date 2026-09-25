@@ -1,1 +1,82 @@
-/* You can add global styles to this file, and also import other style files */
+/* Estilos globales: variables de color y componentes básicos reutilizables. */
+:root {
+  /* Paleta inspirada en Coppel: azul, azul marino y amarillo. */
+  --color-primario: #1c42e8;        /* azul Coppel */
+  --color-primario-oscuro: #081754; /* azul marino (hover y navbar) */
+  --color-acento: #ffd200;          /* amarillo Coppel */
+  --color-fondo: #f4f6fb;
+  --color-texto: #1f2937;
+  --color-borde: #d7dce5;
+  --color-error: #b91c1c;
+  --radio: 8px;
+}
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+}
+
+h1, h2 { margin: 0 0 0.75rem; }
+
+.tarjeta {
+  background: #fff;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: var(--radio);
+  background: var(--color-primario);
+  color: #fff;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn:hover { background: var(--color-primario-oscuro); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-secundario { background: #fff; color: var(--color-primario); border: 1px solid currentColor; }
+.btn-secundario:hover { background: #eef2ff; }
+
+.campo { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 1rem; }
+.campo input, .campo select, .campo textarea {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  font: inherit;
+}
+.error-campo { color: var(--color-error); }
+
+.alerta {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radio);
+  background: #fef2f2;
+  color: var(--color-error);
+  border: 1px solid #fecaca;
+}
+
+.tabla { width: 100%; border-collapse: collapse; background: #fff; border-radius: var(--radio); overflow: hidden; }
+.tabla th, .tabla td { padding: 0.7rem 1rem; text-align: left; border-bottom: 1px solid var(--color-borde); }
+.tabla th { background: #f8fafc; font-weight: 600; }
+
+.etiqueta { padding: 0.15rem 0.55rem; border-radius: 999px; background: #e5e7eb; font-size: 0.85rem; }
+.estatus-pendiente { background: #fef3c7; }
+.estatus-en_progreso { background: #dbeafe; }
+.estatus-completada { background: #dcfce7; }
+
+.pendiente { color: #6b7280; }

@@ -1,1 +1,18 @@
-<p>navbar works!</p>
+<header class="navbar">
+  <a class="marca" [routerLink]="auth.rutaInicio()">Gestión de tareas</a>
+
+  <nav>
+    @if (auth.esAdmin()) {
+      <a routerLink="/usuarios" routerLinkActive="activo">Usuarios</a>
+    } @else if (auth.usuario(); as u) {
+      <a [routerLink]="['/usuarios', u.id]" routerLinkActive="activo">Mis tareas</a>
+    }
+  </nav>
+
+  @if (auth.usuario(); as u) {
+    <div class="sesion">
+      <span>{{ u.nombre }} {{ u.apellido }} · <small>{{ u.rol }}</small></span>
+      <button type="button" class="btn btn-secundario" (click)="auth.logout()">Salir</button>
+    </div>
+  }
+</header>

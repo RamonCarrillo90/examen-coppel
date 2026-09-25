@@ -47,6 +47,7 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// 1. Conexión a la base de datos
 	pool, err := database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return err
@@ -54,22 +55,32 @@ func run() error {
 	defer pool.Close()
 	slog.Info("conectado a PostgreSQL")
 
+	// 2. Repositorios (acceso a datos)
 	usuarioRepo := repository.NewUsuarioRepository(pool)
+	tareaRepo := repository.NewTareaRepository(pool)
+
+	// 3. Admin inicial
 	if err := seed.CrearAdminSiNoExiste(ctx, usuarioRepo, cfg.AdminEmail, cfg.AdminPassword); err != nil {
 		return err
 	}
 
+	// 4. Handlers (HTTP)
 	jwtSecret := []byte(cfg.JWTSecret)
 
 	healthHandler := handlers.NewHealthHandler(pool)
 	authHandler := handlers.NewAuthHandler(usuarioRepo, jwtSecret)
-	usuarioHandler := handlers.NewUsuarioHandler(usuarioRepo)
+	usuarioHandler := handlers.NewUsuarioHandler(usuarioRepo, tareaRepo)
+	tareaHandler := handlers.NewTareaHandler(tareaRepo)
 
+	// 5. Servidor con el router
 	srv := &http.Server{
-		Addr:    ":" + cfg.Port,
-		Handler: router.New(healthHandler, authHandler, usuarioHandler, jwtSecret),
-		// Timeouts: sin ellos, un cliente lento puede mantener conexiones
-		// abiertas indefinidamente y agotar los recursos del servidor al hacer un ataque slowloris
+		Addr: ":" + cfg.Port,
+		Handler: router.New(router.Handlers{
+			Health:  healthHandler,
+			Auth:    authHandler,
+			Usuario: usuarioHandler,
+			Tarea:   tareaHandler,
+		}, jwtSecret),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      15 * time.Second,

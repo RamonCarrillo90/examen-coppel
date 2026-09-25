@@ -16,7 +16,8 @@ import (
 
 // UsuarioHandler maneja los endpoints del crud de usuarios
 type UsuarioHandler struct {
-	repo *repository.UsuarioRepository
+	repo      *repository.UsuarioRepository
+	tareaRepo *repository.TareaRepository
 }
 
 // crearUsuarioRequest es el cuerpo de POST /api/usuarios.
@@ -42,9 +43,16 @@ type datosUsuario struct {
 	Telefono *string `json:"telefono"`
 }
 
+// usuarioConTareas es la respuesta de GET /api/usuarios/{id}:
+// los datos del usuario y, además, la lista de sus tareas.
+type usuarioConTareas struct {
+	*models.Usuario
+	Tareas []models.Tarea `json:"tareas"`
+}
+
 // NewUsuarioHandler crea el handler con el repositorio de usuarios
-func NewUsuarioHandler(repo *repository.UsuarioRepository) *UsuarioHandler {
-	return &UsuarioHandler{repo: repo}
+func NewUsuarioHandler(repo *repository.UsuarioRepository, tareaRepo *repository.TareaRepository) *UsuarioHandler {
+	return &UsuarioHandler{repo: repo, tareaRepo: tareaRepo}
 }
 
 // puedeAcceder indica si quien hace la petición puede ver o editar al usuario id:
@@ -224,7 +232,16 @@ func (h *UsuarioHandler) Obtener(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, usuario)
+	tareas, err := h.tareaRepo.ListarPorUsuario(r.Context(), id)
+
+	if err != nil {
+		slog.Error("error al listar tareas del usuario", "id", id, "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "error interno")
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, usuarioConTareas{Usuario: usuario, Tareas: tareas})
+
 }
 
 // Crer maneja el POST /api/usuarios que se encarga de crear un usuario

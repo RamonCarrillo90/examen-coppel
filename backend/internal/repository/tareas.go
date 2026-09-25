@@ -30,7 +30,7 @@ const columnasTarea = "id, usuario_id, titulo, descripcion, fecha_limite, estatu
 //
 //	Si recibiera el struct sin puntero, recibiría una copia, y los datos se perderían al terminar la función.
 func escanearTarea(s scanner, t *models.Tarea) error {
-	return s.Scan(&t.ID, t.UsuarioID, &t.Titulo, &t.Descripcion, &t.FechaLimite, &t.Estatus, &t.CreadoEn, &t.ActualizadoEn)
+	return s.Scan(&t.ID, &t.UsuarioID, &t.Titulo, &t.Descripcion, &t.FechaLimite, &t.Estatus, &t.CreadoEn, &t.ActualizadoEn)
 }
 
 // EsViolacionFK indica si el error es una violacion a una llave foranea codigo (23503)

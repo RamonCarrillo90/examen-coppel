@@ -1,4 +1,75 @@
-<section class="tarjeta">
-  <h1>{{ id() ? 'Editar usuario' : 'Nuevo usuario' }}</h1>
-  <p class="pendiente">🚧 Formulario en construcción.</p>
+<section class="tarjeta formulario">
+  <h1>{{ esEdicion() ? 'Editar usuario' : 'Nuevo usuario' }}</h1>
+
+  @if (cargando()) {
+    <p>Cargando…</p>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+      <div class="fila">
+        <label class="campo">
+          <span>Nombre *</span>
+          <input formControlName="nombre" autocomplete="given-name" />
+          @if (invalido('nombre')) {
+            <small class="error-campo">El nombre es obligatorio (máx. 100 caracteres)</small>
+          }
+        </label>
+
+        <label class="campo">
+          <span>Apellido *</span>
+          <input formControlName="apellido" autocomplete="family-name" />
+          @if (invalido('apellido')) {
+            <small class="error-campo">El apellido es obligatorio (máx. 100 caracteres)</small>
+          }
+        </label>
+      </div>
+
+      <label class="campo">
+        <span>Email *</span>
+        <input type="email" formControlName="email" autocomplete="email" />
+        @if (invalido('email')) {
+          <small class="error-campo">Escribe un email válido</small>
+        }
+      </label>
+
+      <label class="campo">
+        <span>Teléfono</span>
+        <input type="tel" formControlName="telefono" autocomplete="tel" />
+        @if (invalido('telefono')) {
+          <small class="error-campo">Máximo 20 caracteres</small>
+        }
+      </label>
+
+      <label class="campo">
+        <span>{{ esEdicion() ? 'Nueva contraseña (déjala vacía para no cambiarla)' : 'Contraseña *' }}</span>
+        <input type="password" formControlName="password" autocomplete="new-password" />
+        @if (invalido('password')) {
+          <small class="error-campo">La contraseña debe tener entre 8 y 72 caracteres</small>
+        }
+      </label>
+
+      @if (auth.esAdmin()) {
+        <label class="campo">
+          <span>Rol</span>
+          <select formControlName="rol">
+            <option value="usuario">Usuario</option>
+            <option value="admin">Administrador</option>
+          </select>
+          @if (esUnoMismo()) {
+            <small class="ayuda">No puedes cambiar tu propio rol.</small>
+          }
+        </label>
+      }
+
+      @if (error(); as mensaje) {
+        <p class="alerta">{{ mensaje }}</p>
+      }
+
+      <div class="form-acciones">
+        <a class="btn btn-secundario" [routerLink]="rutaCancelar()">Cancelar</a>
+        <button type="submit" class="btn" [disabled]="enviando()">
+          {{ enviando() ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  }
 </section>

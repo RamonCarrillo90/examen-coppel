@@ -1,5 +1,10 @@
-import { CanActivateFn } from '@angular/router';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
 
-export const authGuard: CanActivateFn = (route, state) => {
-  return true;
+import { Auth } from '../services/auth';
+
+/** authGuard solo deja entrar si hay sesión; si no, manda al login. */
+export const authGuard: CanActivateFn = () => {
+  const auth = inject(Auth);
+  return auth.estaAutenticado() ? true : inject(Router).createUrlTree(['/login']);
 };

@@ -33,9 +33,17 @@
 
       <label class="campo">
         <span>Teléfono</span>
-        <input type="tel" formControlName="telefono" autocomplete="tel" />
+        <input
+          type="tel"
+          formControlName="telefono"
+          autocomplete="tel"
+          inputmode="numeric"
+          maxlength="10"
+          placeholder="10 dígitos"
+          (input)="soloDigitos()"
+        >
         @if (invalido('telefono')) {
-          <small class="error-campo">Máximo 20 caracteres</small>
+          <small class="error-campo">El teléfono debe tener 10 dígitos</small>
         }
       </label>
 

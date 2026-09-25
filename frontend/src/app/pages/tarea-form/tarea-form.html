@@ -24,7 +24,10 @@
       <div class="fila">
         <label class="campo">
           <span>Fecha límite</span>
-          <input type="date" formControlName="fecha_limite" />
+          <input type="date" formControlName="fecha_limite" [min]="hoy" />
+          @if (invalido('fecha_limite')) {
+            <small class="error-campo">La fecha límite no puede ser anterior a hoy</small>
+          }
         </label>
 
         <label class="campo">

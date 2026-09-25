@@ -34,11 +34,18 @@ export class UsuarioForm implements OnInit {
   /** Solo un admin cambia roles, y nunca el suyo. */
   protected readonly puedeCambiarRol = computed(() => this.auth.esAdmin() && !this.esUnoMismo());
 
+  /** Deja solo dígitos (máximo 10) mientras se escribe o se pega el teléfono. */
+protected soloDigitos(): void {
+  const control = this.form.controls.telefono;
+  const limpio = control.value.replace(/\D/g, '').slice(0, 10);
+  if (limpio !== control.value) control.setValue(limpio);
+}
+
   protected readonly form = inject(FormBuilder).nonNullable.group({
     nombre: ['', [Validators.required, Validators.maxLength(100)]],
     apellido: ['', [Validators.required, Validators.maxLength(100)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
-    telefono: ['', Validators.maxLength(20)],
+    telefono: ['', Validators.pattern(/^\d{10}$/)], // opcional; si viene, 10 dígitos
     password: ['', [Validators.minLength(8), Validators.maxLength(72)]],
     rol: ['usuario' as Rol],
   });

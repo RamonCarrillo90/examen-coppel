@@ -347,3 +347,26 @@ Authorization: Bearer {{login.response.body.token}}
 ### C3. La tarea de Ana desapareció con ella → 404
 GET {{baseUrl}}/tareas/{{tareaAna.response.body.id}}
 Authorization: Bearer {{login.response.body.token}}
+
+### U-TEL. Crear con teléfono de 11 dígitos → 400
+POST {{baseUrl}}/usuarios
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "nombre": "Prueba",
+  "apellido": "Telefono",
+  "email": "prueba.telefono@example.com",
+  "telefono": "66712345678",
+  "password": "prueba123"
+}
+
+### T-FECHA. Crear tarea con fecha vencida → 400
+POST {{baseUrl}}/usuarios/{{nuevo.response.body.id}}/tareas
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Fecha vencida",
+  "fecha_limite": "2020-01-01"
+}

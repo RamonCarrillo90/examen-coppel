@@ -62,6 +62,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      TZ: America/Mazatlan
     ports:
       # Expuesto temporalmente para probar con Postman/curl.
       # Cuando agreguemos Nginx, la API solo será accesible a través de él.

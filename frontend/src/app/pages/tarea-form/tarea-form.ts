@@ -1,5 +1,11 @@
 import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
 
@@ -8,6 +14,7 @@ import { Usuario } from '../../core/models/usuario';
 import { Tareas } from '../../core/services/tareas';
 import { Usuarios } from '../../core/services/usuarios';
 import { mensajeError } from '../../core/utils/errores';
+import { hoyLocal } from '../../core/utils/fechas';
 
 /**
  * Formulario para crear (/usuarios/:usuarioId/tareas/nueva) o editar
@@ -39,10 +46,15 @@ export class TareaForm implements OnInit {
   /** Dueño original: a su detalle regresa "Cancelar". */
   protected readonly duenoOriginal = signal<number | null>(null);
 
+  /** Hoy en "AAAA-MM-DD": también es el [min] del calendario. */
+  protected readonly hoy = hoyLocal();
+  /** Fecha que ya tenía la tarea al editar (puede estar vencida y se permite conservarla). */
+  private fechaOriginal = '';
+
   protected readonly form = inject(FormBuilder).nonNullable.group({
     titulo: ['', [Validators.required, Validators.maxLength(150)]],
     descripcion: ['', Validators.maxLength(1000)],
-    fecha_limite: [''], // "AAAA-MM-DD", o vacío si no tiene
+    fecha_limite: ['', (c: AbstractControl<string>) => this.validarFecha(c)], // "AAAA-MM-DD" o vacío
     estatus: ['pendiente' as Estatus],
     usuario_id: [0, Validators.min(1)],
   });
@@ -61,11 +73,12 @@ export class TareaForm implements OnInit {
       next: ({ usuarios, tarea }) => {
         this.usuarios.set(usuarios);
         if (tarea) {
+          // El backend manda "2026-09-30T00:00:00Z"; el <input type="date"> quiere "2026-09-30".
+          this.fechaOriginal = tarea.fecha_limite?.slice(0, 10) ?? '';
           this.form.patchValue({
             titulo: tarea.titulo,
             descripcion: tarea.descripcion ?? '',
-            // El backend manda "2026-09-30T00:00:00Z"; el <input type="date"> quiere "2026-09-30".
-            fecha_limite: tarea.fecha_limite?.slice(0, 10) ?? '',
+            fecha_limite: this.fechaOriginal,
             estatus: tarea.estatus,
             usuario_id: tarea.usuario_id,
           });
@@ -82,6 +95,17 @@ export class TareaForm implements OnInit {
         this.cargando.set(false);
       },
     });
+  }
+
+  /**
+   * La fecha límite no puede ser anterior a hoy. Excepción: al editar, se puede
+   * conservar la fecha que ya tenía (si no, una tarea vencida no se podría editar).
+   * Las fechas "AAAA-MM-DD" se pueden comparar como texto.
+   */
+  private validarFecha(control: AbstractControl<string>): ValidationErrors | null {
+    const fecha = control.value;
+    if (!fecha || fecha === this.fechaOriginal || fecha >= this.hoy) return null;
+    return { fechaPasada: true };
   }
 
   /** true si el campo ya fue tocado y es inválido (para mostrar su mensaje). */

@@ -1,1 +1,37 @@
-<p>usuario-detalle works!</p>
+@if (error(); as mensaje) {
+  <p class="alerta">{{ mensaje }}</p>
+} @else if (usuario(); as u) {
+  <section class="tarjeta">
+    <div class="encabezado">
+      <h1>{{ u.nombre }} {{ u.apellido }}</h1>
+      <a class="btn btn-secundario" [routerLink]="['/usuarios', u.id, 'editar']">Editar</a>
+    </div>
+    <p>{{ u.email }} · {{ u.telefono ?? 'Sin teléfono' }} · <span class="etiqueta">{{ u.rol }}</span></p>
+  </section>
+
+  <div class="encabezado">
+    <h2>Tareas</h2>
+    @if (auth.esAdmin()) {
+      <a class="btn" [routerLink]="['/usuarios', u.id, 'tareas', 'nueva']">Nueva tarea</a>
+    }
+  </div>
+
+  <table class="tabla">
+    <thead>
+      <tr><th>Título</th><th>Fecha límite</th><th>Estatus</th></tr>
+    </thead>
+    <tbody>
+      @for (t of u.tareas; track t.id) {
+        <tr>
+          <td>{{ t.titulo }}</td>
+          <td>{{ t.fecha_limite ? (t.fecha_limite | date: 'dd/MM/yyyy' : 'UTC') : '—' }}</td>
+          <td><span class="etiqueta estatus-{{ t.estatus }}">{{ etiquetas[t.estatus] }}</span></td>
+        </tr>
+      } @empty {
+        <tr><td colspan="3">Este usuario no tiene tareas.</td></tr>
+      }
+    </tbody>
+  </table>
+} @else {
+  <p>Cargando…</p>
+}

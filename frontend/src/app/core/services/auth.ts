@@ -47,6 +47,11 @@ export class Auth {
     this._usuario.set(null);
     this.router.navigate(['/login']);
   }
+  /** Actualiza los datos del usuario en sesión (por ejemplo, si editó su propio perfil). */
+actualizarUsuario(usuario: Usuario): void {
+  localStorage.setItem(CLAVE_USUARIO, JSON.stringify(usuario));
+  this._usuario.set(usuario);
+}
 
   /** Pantalla de inicio según el rol: el admin ve la lista; el usuario, su propio detalle. */
   rutaInicio(): string {
@@ -65,3 +70,4 @@ function leerUsuarioGuardado(): Usuario | null {
     return null;
   }
 }
+

@@ -26,3 +26,13 @@ export interface ActualizarTareaPayload extends TareaPayload {
   usuario_id: number;
   estatus: Estatus;
 }
+
+/** Todos los estatus, en el orden en que se muestran en las listas. */
+export const ESTATUS: Estatus[] = ['pendiente', 'en_progreso', 'completada'];
+
+/** Texto para mostrar de cada estatus. */
+export const ETIQUETAS_ESTATUS: Record<Estatus, string> = {
+  pendiente: 'Pendiente',
+  en_progreso: 'En progreso',
+  completada: 'Completada',
+};

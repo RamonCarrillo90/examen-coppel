@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	_ "time/tzdata" // incluye la base de zonas horarias dentro del binario
 
 	"examen-coppel/backend/internal/config"
 	"examen-coppel/backend/internal/database"

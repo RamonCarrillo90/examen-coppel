@@ -9,10 +9,14 @@ import (
 	"log/slog"
 	"net/http"
 	"net/mail"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 )
+
+// telefonoValido: exactamente 10 dígitos, sin espacios ni guiones.
+var telefonoValido = regexp.MustCompile(`^[0-9]{10}$`)
 
 // UsuarioHandler maneja los endpoints del crud de usuarios
 type UsuarioHandler struct {
@@ -103,14 +107,13 @@ func (d *datosUsuario) validar() error {
 
 	// El teléfono es opcional; si viene, debe tener 10 dígitos (formato de México).
 	if d.Telefono != nil {
-		telefono := strings.TrimSpace(*d.Telefono)
-		switch {
-		case telefono == "":
-			d.Telefono = nil // campo vacío en el formulario = sin teléfono
-		case len(telefono) != 10 || !esSoloNumeros(telefono):
+		t := strings.TrimSpace(*d.Telefono)
+		if t == "" {
+			d.Telefono = nil // vacío = sin teléfono
+		} else if !telefonoValido.MatchString(t) {
 			return errors.New("el teléfono debe tener 10 dígitos")
-		default:
-			d.Telefono = &telefono
+		} else {
+			d.Telefono = &t
 		}
 	}
 	return nil

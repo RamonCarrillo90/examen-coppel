@@ -13,6 +13,9 @@ import (
 	"unicode/utf8"
 )
 
+// errFechaPasada se devuelve cuando la fecha límite ya pasó.
+var errFechaPasada = errors.New("la fecha límite no puede ser anterior a hoy")
+
 // TareaHandler maneja los endpoints del crud de Tareas
 type TareaHandler struct {
 	repo *repository.TareaRepository
@@ -141,6 +144,11 @@ func (h *TareaHandler) Crear(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.fecha != nil && req.fecha.Before(hoy()) {
+		httpx.WriteError(w, http.StatusBadRequest, errFechaPasada.Error())
+		return
+	}
+
 	tarea := &models.Tarea{
 		UsuarioID:   usuarioID,
 		Titulo:      req.Titulo,
@@ -245,8 +253,13 @@ func (h *TareaHandler) Actualizar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		slog.Error("error al obtener usuario para actualizar", "id", tareaID, "error", err)
+		slog.Error("error al obtener la tarea para actualizar", "id", tareaID, "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "error interno")
+		return
+	}
+	// Se permite conservar la fecha que ya tenía, aunque esté vencida.
+	if req.fecha != nil && req.fecha.Before(hoy()) && !mismaFecha(req.fecha, tarea.FechaLimite) {
+		httpx.WriteError(w, http.StatusBadRequest, errFechaPasada.Error())
 		return
 	}
 
@@ -330,4 +343,16 @@ func (h *TareaHandler) Eliminar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// hoy devuelve la fecha de hoy (según la zona horaria del servidor) a las 00:00 UTC.
+// Así se puede comparar con las fechas "AAAA-MM-DD", que time.Parse deja en UTC.
+func hoy() time.Time {
+	a, m, d := time.Now().Date()
+	return time.Date(a, m, d, 0, 0, 0, 0, time.UTC)
+}
+
+// mismaFecha dice si dos fechas opcionales son el mismo día.
+func mismaFecha(a, b *time.Time) bool {
+	return a != nil && b != nil && a.Equal(*b)
 }

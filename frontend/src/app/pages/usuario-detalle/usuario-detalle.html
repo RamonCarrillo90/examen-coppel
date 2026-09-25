@@ -4,10 +4,19 @@
   <section class="tarjeta">
     <div class="encabezado">
       <h1>{{ u.nombre }} {{ u.apellido }}</h1>
-      <a class="btn btn-secundario" [routerLink]="['/usuarios', u.id, 'editar']">Editar</a>
+      <div class="acciones">
+        <a class="btn btn-secundario" [routerLink]="['/usuarios', u.id, 'editar']">Editar</a>
+        @if (puedeEliminarUsuario()) {
+          <button type="button" class="btn btn-peligro" (click)="eliminarUsuario(u)">Eliminar</button>
+        }
+      </div>
     </div>
     <p>{{ u.email }} · {{ u.telefono ?? 'Sin teléfono' }} · <span class="etiqueta">{{ u.rol }}</span></p>
   </section>
+
+  @if (aviso(); as mensaje) {
+    <p class="alerta">{{ mensaje }}</p>
+  }
 
   <div class="encabezado">
     <h2>Tareas</h2>
@@ -18,17 +27,47 @@
 
   <table class="tabla">
     <thead>
-      <tr><th>Título</th><th>Fecha límite</th><th>Estatus</th></tr>
+      <tr>
+        <th>Título</th>
+        <th>Fecha límite</th>
+        <th>Estatus</th>
+        @if (auth.esAdmin()) {
+          <th>Acciones</th>
+        }
+      </tr>
     </thead>
     <tbody>
       @for (t of u.tareas; track t.id) {
         <tr>
-          <td>{{ t.titulo }}</td>
+          <td>
+            {{ t.titulo }}
+            @if (t.descripcion) {
+              <small class="descripcion">{{ t.descripcion }}</small>
+            }
+          </td>
           <td>{{ t.fecha_limite ? (t.fecha_limite | date: 'dd/MM/yyyy' : 'UTC') : '—' }}</td>
-          <td><span class="etiqueta estatus-{{ t.estatus }}">{{ etiquetas[t.estatus] }}</span></td>
+          <td>
+            <!-- #sel: referencia al <select> para leer su valor en (change) -->
+            <select
+              #sel
+              class="etiqueta estatus-{{ t.estatus }}"
+              [attr.aria-label]="'Estatus de ' + t.titulo"
+              (change)="cambiarEstatus(t, sel.value)"
+            >
+              @for (e of estatus; track e) {
+                <option [value]="e" [selected]="e === t.estatus">{{ etiquetas[e] }}</option>
+              }
+            </select>
+          </td>
+          @if (auth.esAdmin()) {
+            <td class="acciones">
+              <a class="btn btn-secundario btn-chico" [routerLink]="['/tareas', t.id, 'editar']">Editar</a>
+              <button type="button" class="btn btn-peligro btn-chico" (click)="eliminarTarea(t)">Eliminar</button>
+            </td>
+          }
         </tr>
       } @empty {
-        <tr><td colspan="3">Este usuario no tiene tareas.</td></tr>
+        <tr><td [attr.colspan]="auth.esAdmin() ? 4 : 3">Este usuario no tiene tareas.</td></tr>
       }
     </tbody>
   </table>

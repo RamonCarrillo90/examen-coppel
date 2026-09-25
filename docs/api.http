@@ -200,3 +200,150 @@ Authorization: Bearer {{login.response.body.token}}
 ### 15. Consultar a Ana ya eliminada → 404
 GET {{baseUrl}}/usuarios/{{nuevo.response.body.id}}
 Authorization: Bearer {{login.response.body.token}}
+
+### ═════════════════════════════════════════════
+### TAREAS
+### Requiere: login (admin), nuevo (Ana creada) y loginAna.
+### ═════════════════════════════════════════════
+
+### T1. Admin crea una tarea para Ana → 201 (se guarda como "tarea")
+# @name tarea
+POST {{baseUrl}}/usuarios/{{nuevo.response.body.id}}/tareas
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Preparar reporte mensual",
+  "descripcion": "Ventas de septiembre por sucursal",
+  "fecha_limite": "2026-09-30"
+}
+
+### T2. Crear con fecha inválida → 400
+POST {{baseUrl}}/usuarios/{{nuevo.response.body.id}}/tareas
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Fecha mala",
+  "fecha_limite": "30/09/2026"
+}
+
+### T3. Crear sin título → 400
+POST {{baseUrl}}/usuarios/{{nuevo.response.body.id}}/tareas
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "   "
+}
+
+### T4. Crear para un usuario que no existe → 404
+POST {{baseUrl}}/usuarios/99999/tareas
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Huérfana"
+}
+
+### T5. Ana intenta crear una tarea → 403
+POST {{baseUrl}}/usuarios/{{nuevo.response.body.id}}/tareas
+Authorization: Bearer {{loginAna.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "No debería poder"
+}
+
+### T6. Detalle de Ana CON sus tareas → 200 con "tareas": [...]
+GET {{baseUrl}}/usuarios/{{nuevo.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### T7. Ana ve su propia tarea → 200
+GET {{baseUrl}}/tareas/{{tarea.response.body.id}}
+Authorization: Bearer {{loginAna.response.body.token}}
+
+### T8. Ana cambia el estatus de su tarea → 200
+PATCH {{baseUrl}}/tareas/{{tarea.response.body.id}}/estatus
+Authorization: Bearer {{loginAna.response.body.token}}
+Content-Type: application/json
+
+{
+  "estatus": "en_progreso"
+}
+
+### T9. Estatus inválido → 400
+PATCH {{baseUrl}}/tareas/{{tarea.response.body.id}}/estatus
+Authorization: Bearer {{loginAna.response.body.token}}
+Content-Type: application/json
+
+{
+  "estatus": "terminada"
+}
+
+### T10. Ana intenta editar la tarea completa (PUT) → 403
+PUT {{baseUrl}}/tareas/{{tarea.response.body.id}}
+Authorization: Bearer {{loginAna.response.body.token}}
+Content-Type: application/json
+
+{
+  "usuario_id": {{nuevo.response.body.id}},
+  "titulo": "Cambio no permitido",
+  "estatus": "completada"
+}
+
+### T11. Admin REASIGNA la tarea al admin → 200 con usuario_id del admin
+PUT {{baseUrl}}/tareas/{{tarea.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "usuario_id": {{login.response.body.usuario.id}},
+  "titulo": "Preparar reporte mensual",
+  "descripcion": "Ventas de septiembre por sucursal",
+  "fecha_limite": "2026-10-05",
+  "estatus": "en_progreso"
+}
+
+### T12. Ana ya no puede ver la tarea (ahora es del admin) → 404
+GET {{baseUrl}}/tareas/{{tarea.response.body.id}}
+Authorization: Bearer {{loginAna.response.body.token}}
+
+### T13. Reasignar a un usuario que no existe → 400
+PUT {{baseUrl}}/tareas/{{tarea.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "usuario_id": 99999,
+  "titulo": "Preparar reporte mensual",
+  "estatus": "en_progreso"
+}
+
+### T14. Admin elimina la tarea → 204
+DELETE {{baseUrl}}/tareas/{{tarea.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### T15. La tarea ya no existe → 404
+GET {{baseUrl}}/tareas/{{tarea.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### ── Prueba de CASCADA: eliminar usuario elimina sus tareas ──
+
+### C1. Crear otra tarea para Ana (se guarda como "tareaAna")
+# @name tareaAna
+POST {{baseUrl}}/usuarios/{{nuevo.response.body.id}}/tareas
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Tarea que se borrará con Ana"
+}
+
+### C2. Eliminar a Ana → 204
+DELETE {{baseUrl}}/usuarios/{{nuevo.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### C3. La tarea de Ana desapareció con ella → 404
+GET {{baseUrl}}/tareas/{{tareaAna.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}

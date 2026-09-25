@@ -1,4 +1,64 @@
-<section class="tarjeta">
-  <h1>{{ id() ? 'Editar tarea' : 'Nueva tarea' }}</h1>
-  <p class="pendiente">🚧 Formulario en construcción.</p>
+<section class="tarjeta formulario">
+  <h1>{{ esEdicion() ? 'Editar tarea' : 'Nueva tarea' }}</h1>
+
+  @if (cargando()) {
+    <p>Cargando…</p>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+      <label class="campo">
+        <span>Título *</span>
+        <input formControlName="titulo" />
+        @if (invalido('titulo')) {
+          <small class="error-campo">El título es obligatorio (máx. 150 caracteres)</small>
+        }
+      </label>
+
+      <label class="campo">
+        <span>Descripción</span>
+        <textarea formControlName="descripcion" rows="4"></textarea>
+        @if (invalido('descripcion')) {
+          <small class="error-campo">Máximo 1000 caracteres</small>
+        }
+      </label>
+
+      <div class="fila">
+        <label class="campo">
+          <span>Fecha límite</span>
+          <input type="date" formControlName="fecha_limite" />
+        </label>
+
+        <label class="campo">
+          <span>Estatus</span>
+          <select formControlName="estatus">
+            @for (e of estatus; track e) {
+              <option [value]="e">{{ etiquetas[e] }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <label class="campo">
+        <span>Asignada a</span>
+        <select formControlName="usuario_id">
+          @for (u of usuarios(); track u.id) {
+            <option [ngValue]="u.id">{{ u.nombre }} {{ u.apellido }} ({{ u.email }})</option>
+          }
+        </select>
+        @if (esEdicion()) {
+          <small class="ayuda">Cambiar el usuario reasigna la tarea.</small>
+        }
+      </label>
+
+      @if (error(); as mensaje) {
+        <p class="alerta">{{ mensaje }}</p>
+      }
+
+      <div class="form-acciones">
+        <a class="btn btn-secundario" [routerLink]="['/usuarios', duenoOriginal()]">Cancelar</a>
+        <button type="submit" class="btn" [disabled]="enviando()">
+          {{ enviando() ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  }
 </section>

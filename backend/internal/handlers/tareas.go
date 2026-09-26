@@ -32,7 +32,7 @@ type crearTareaRequest struct {
 // incluye usuario_id cambiarlo es REASIGNAR la tarea
 type actualizarTareaRequest struct {
 	tareaRequest
-	UsuarioID int    `json:"usuario_id"`
+	UsuarioID *int   `json:"usuario_id"`
 	Estatus   string `json:"estatus"`
 }
 
@@ -48,6 +48,13 @@ type tareaRequest struct {
 	FechaLimite *string `json:"fecha_limite"` //"AAAA-MM-DD""
 
 	fecha *time.Time
+}
+
+// crearTareaGeneralRequest es el cuerpo de POST /api/tareas.
+// usuario_id es opcional: si no viene (o es null), la tarea queda sin asignar.
+type crearTareaGeneralRequest struct {
+	tareaRequest
+	UsuarioID *int `json:"usuario_id"`
 }
 
 // NewTareaHandler crea el handler con el repositorio de tareas
@@ -92,8 +99,8 @@ func (t *tareaRequest) validar() error {
 // validar exige usuario_id y estatus (un PUT manda la tarea completa)
 // y aplica las reglas comunes de tareaRequest.
 func (req *actualizarTareaRequest) validar() error {
-	if req.UsuarioID <= 0 {
-		return errors.New("usuario_id es obligatorio")
+	if req.UsuarioID != nil && *req.UsuarioID <= 0 {
+		return errors.New("usuario_id inválido")
 	}
 	// En un PUT el estatus es obligatorio: si viene vacío, esEstatusValido da false.
 	if !esEstatusValido(req.Estatus) {
@@ -144,7 +151,7 @@ func (h *TareaHandler) Crear(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tarea := &models.Tarea{
-		UsuarioID:   usuarioID,
+		UsuarioID:   &usuarioID,
 		Titulo:      req.Titulo,
 		Descripcion: req.Descripcion,
 		FechaLimite: req.fecha, // la fecha ya convertida por validar()
@@ -204,7 +211,7 @@ func (h *TareaHandler) cargarTareaPropia(w http.ResponseWriter, r *http.Request)
 	}
 	//tenemos que verificar si el USUARIO puede obtener la tarea solicitada
 	//por eso es tarea.UsuarioID
-	if !puedeAcceder(claims, tarea.UsuarioID) {
+	if !puedeAccederTarea(claims, tarea) {
 		//si el usuario no tiene permisos devolvemos 404
 		httpx.WriteError(w, http.StatusNotFound, "tarea no encontrada")
 		return nil
@@ -385,4 +392,59 @@ func (h *TareaHandler) Listar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, tareas)
+}
+
+// CrearGeneral maneja POST /api/tareas: crea una tarea con o sin usuario (solo admin).
+func (h *TareaHandler) CrearGeneral(w http.ResponseWriter, r *http.Request) {
+	var req crearTareaGeneralRequest
+	if err := httpx.DecodeJSON(w, r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "cuerpo de la petición inválido")
+		return
+	}
+	if err := req.validar(); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.fecha != nil && req.fecha.Before(hoy()) {
+		httpx.WriteError(w, http.StatusBadRequest, errFechaPasada.Error())
+		return
+	}
+
+	tarea := &models.Tarea{
+		UsuarioID:   req.UsuarioID, // nil = sin asignar
+		Titulo:      req.Titulo,
+		Descripcion: req.Descripcion,
+		FechaLimite: req.fecha,
+		Estatus:     models.EstatusPendiente,
+	}
+
+	err := h.repo.Crear(r.Context(), tarea)
+	if errors.Is(err, repository.ErrUsuarioNoExiste) {
+		httpx.WriteError(w, http.StatusBadRequest, "el usuario asignado no existe")
+		return
+	}
+	if err != nil {
+		slog.Error("error al crear tarea", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "error interno")
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusCreated, tarea)
+}
+
+func (r *crearTareaGeneralRequest) validar() error {
+	if r.UsuarioID != nil && *r.UsuarioID <= 0 {
+		return errors.New("usuario_id inválido")
+	}
+	return r.tareaRequest.validar()
+}
+
+// puedeAccederTarea dice si quien llama puede ver o cambiar esta tarea:
+// el admin, cualquiera; un usuario normal, solo las suyas.
+// Una tarea sin usuario solo la ve el admin.
+func puedeAccederTarea(claims *auth.Claims, t *models.Tarea) bool {
+	if t.UsuarioID == nil {
+		return claims.Rol == models.RolAdmin
+	}
+	return puedeAcceder(claims, *t.UsuarioID)
 }

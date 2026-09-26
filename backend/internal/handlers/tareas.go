@@ -31,7 +31,8 @@ type crearTareaRequest struct {
 // incluye usuario_id cambiarlo es REASIGNAR la tarea
 type actualizarTareaRequest struct {
 	tareaRequest
-	UsuarioID int `json:"usuario_id"`
+	UsuarioID int    `json:"usuario_id"`
+	Estatus   string `json:"estatus"`
 }
 
 // estatusRequest es el cuerpo de PATCH /api/tareas/{id}/estatus.
@@ -44,7 +45,6 @@ type tareaRequest struct {
 	Titulo      string  `json:"titulo"`
 	Descripcion *string `json:"descripcion"`
 	FechaLimite *string `json:"fecha_limite"` //"AAAA-MM-DD""
-	Estatus     string  `json:"estatus"`
 
 	fecha *time.Time
 }
@@ -85,14 +85,6 @@ func (t *tareaRequest) validar() error {
 			t.fecha = &fecha
 		}
 	}
-
-	if t.Estatus == "" {
-		t.Estatus = models.EstatusPendiente
-	}
-
-	if !esEstatusValido(t.Estatus) {
-		return errors.New("estatus inválido: debe ser pendiente, en_progreso o completada")
-	}
 	return nil
 }
 
@@ -102,8 +94,9 @@ func (req *actualizarTareaRequest) validar() error {
 	if req.UsuarioID <= 0 {
 		return errors.New("usuario_id es obligatorio")
 	}
-	if req.Estatus == "" {
-		return errors.New("el estatus es obligatorio")
+	// En un PUT el estatus es obligatorio: si viene vacío, esEstatusValido da false.
+	if !esEstatusValido(req.Estatus) {
+		return errors.New("estatus inválido")
 	}
 	return req.tareaRequest.validar()
 }
@@ -154,7 +147,7 @@ func (h *TareaHandler) Crear(w http.ResponseWriter, r *http.Request) {
 		Titulo:      req.Titulo,
 		Descripcion: req.Descripcion,
 		FechaLimite: req.fecha, // la fecha ya convertida por validar()
-		Estatus:     req.Estatus,
+		Estatus:     models.EstatusPendiente,
 	}
 
 	err = h.repo.Crear(r.Context(), tarea)

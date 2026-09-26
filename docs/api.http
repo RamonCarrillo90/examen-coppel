@@ -9,7 +9,7 @@ Content-Type: application/json
 
 {
   "email": "admin@gmail.com",
-  "password": "admin123"
+  "password": "ContaEjemplo"
 }
 
 ### Contraseña incorrecta → 401 "credenciales inválidas"
@@ -89,7 +89,7 @@ Content-Type: application/json
 {
   "nombre": "Ana",
   "apellido": "López",
-  "email": "ana.lopez@example.com",
+  "email": "analopez@example.com",
   "telefono": "6671234567",
   "password": "ana12345",
   "rol": "usuario"
@@ -369,4 +369,14 @@ Content-Type: application/json
 {
   "titulo": "Fecha vencida",
   "fecha_limite": "2020-01-01"
+}
+
+### T-PEND. Crear tarea mandando estatus → 400 (el estatus no se acepta al crear)
+POST {{baseUrl}}/usuarios/{{nuevo.response.body.id}}/tareas
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "No debería crearse",
+  "estatus": "completada"
 }

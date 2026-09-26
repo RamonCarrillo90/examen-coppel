@@ -49,6 +49,7 @@ func New(h Handlers, jwtSecret []byte) http.Handler {
 	mux.Handle("DELETE /api/tareas/{id}", autenticado(http.HandlerFunc(h.Tarea.Eliminar)))
 	mux.Handle("GET /api/tareas", autenticado(RequireAdmin(http.HandlerFunc(h.Tarea.Listar))))
 	mux.Handle("POST /api/tareas", autenticado(RequireAdmin(http.HandlerFunc(h.Tarea.CrearGeneral))))
+	mux.Handle("GET /api/tareas/disponibles", autenticado(http.HandlerFunc(h.Tarea.Disponibles)))
 	// Los middlewares se aplican de afuera hacia adentro:
 	// recoverPanics -> logRequests -> mux
 	return recoverPanics(logRequests(mux))

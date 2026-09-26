@@ -1,0 +1,33 @@
+<div class="encabezado">
+  <h1>Tareas disponibles</h1>
+</div>
+<p class="ayuda">Tareas que todavía no tienen a nadie asignado.</p>
+
+<div class="filtros">
+  <input type="search" [formControl]="busqueda" placeholder="Buscar por título o descripción…" aria-label="Buscar" />
+</div>
+
+@if (error(); as mensaje) {
+  <p class="alerta">{{ mensaje }}</p>
+}
+
+<table class="tabla" [class.cargando]="cargando()">
+  <thead>
+    <tr><th>Título</th><th>Fecha límite</th></tr>
+  </thead>
+  <tbody>
+    @for (t of tareas(); track t.id) {
+      <tr>
+        <td>
+          {{ t.titulo }}
+          @if (t.descripcion) {
+            <small class="descripcion">{{ t.descripcion }}</small>
+          }
+        </td>
+        <td>{{ t.fecha_limite ? (t.fecha_limite | date: 'dd/MM/yyyy' : 'UTC') : '—' }}</td>
+      </tr>
+    } @empty {
+      <tr><td colspan="2">{{ cargando() ? 'Cargando…' : 'No hay tareas disponibles por ahora.' }}</td></tr>
+    }
+  </tbody>
+</table>

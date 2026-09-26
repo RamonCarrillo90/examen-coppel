@@ -1,0 +1,65 @@
+<div class="encabezado">
+  <h1>Tareas</h1>
+  <a class="btn" routerLink="/tareas/nueva">Nueva tarea</a>
+</div>
+
+<form class="filtros" [formGroup]="filtros">
+  <input type="search" formControlName="q" placeholder="Buscar por título o descripción…" aria-label="Buscar" />
+
+  <select formControlName="estatus" aria-label="Estatus">
+    <option value="">Todos los estatus</option>
+    @for (e of estatus; track e) {
+      <option [value]="e">{{ etiquetas[e] }}</option>
+    }
+  </select>
+
+  <select formControlName="usuario" aria-label="Asignada a">
+    <option value="">Todos los usuarios</option>
+    <option value="sin">Sin asignar</option>
+    @for (u of usuarios(); track u.id) {
+      <option [value]="u.id">{{ u.nombre }} {{ u.apellido }}</option>
+    }
+  </select>
+
+  <button type="button" class="btn btn-secundario" (click)="limpiar()">Limpiar</button>
+</form>
+
+@if (error(); as mensaje) {
+  <p class="alerta">{{ mensaje }}</p>
+}
+
+<table class="tabla" [class.cargando]="cargando()">
+  <thead>
+    <tr>
+      <th>Título</th>
+      <th>Asignada a</th>
+      <th>Fecha límite</th>
+      <th>Estatus</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (t of tareas(); track t.id) {
+      <tr>
+        <td>{{ t.titulo }}</td>
+        <td>
+          @if (t.usuario_id === null) {
+            <span class="etiqueta sin-asignar">Sin asignar</span>
+          } @else {
+            <a [routerLink]="['/usuarios', t.usuario_id]">{{ nombres().get(t.usuario_id) ?? '…' }}</a>
+          }
+        </td>
+        <td>{{ t.fecha_limite ? (t.fecha_limite | date: 'dd/MM/yyyy' : 'UTC') : '—' }}</td>
+        <td><span class="etiqueta estatus-{{ t.estatus }}">{{ etiquetas[t.estatus] }}</span></td>
+        <td>
+          <div class="acciones">
+            <a class="btn btn-secundario btn-chico" [routerLink]="['/tareas', t.id, 'editar']">Editar</a>
+            <button type="button" class="btn btn-peligro btn-chico" (click)="eliminar(t)">Eliminar</button>
+          </div>
+        </td>
+      </tr>
+    } @empty {
+      <tr><td colspan="5">{{ cargando() ? 'Cargando…' : 'No hay tareas que coincidan con la búsqueda.' }}</td></tr>
+    }
+  </tbody>
+</table>

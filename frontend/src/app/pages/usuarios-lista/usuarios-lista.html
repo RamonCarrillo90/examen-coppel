@@ -3,26 +3,34 @@
   <a class="btn" routerLink="/usuarios/nuevo">Nuevo usuario</a>
 </div>
 
-@if (cargando()) {
-  <p>Cargando…</p>
-} @else if (error(); as mensaje) {
+<form class="filtros" [formGroup]="filtros">
+  <input type="search" formControlName="q" placeholder="Buscar por nombre, apellido o email…" aria-label="Buscar" />
+  <select formControlName="rol" aria-label="Rol">
+    <option value="">Todos los roles</option>
+    <option value="usuario">Usuario</option>
+    <option value="admin">Administrador</option>
+  </select>
+  <button type="button" class="btn btn-secundario" (click)="limpiar()">Limpiar</button>
+</form>
+
+@if (error(); as mensaje) {
   <p class="alerta">{{ mensaje }}</p>
-} @else {
-  <table class="tabla">
-    <thead>
-      <tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Rol</th></tr>
-    </thead>
-    <tbody>
-      @for (u of usuarios(); track u.id) {
-        <tr>
-          <td><a [routerLink]="['/usuarios', u.id]">{{ u.nombre }} {{ u.apellido }}</a></td>
-          <td>{{ u.email }}</td>
-          <td>{{ u.telefono ?? '—' }}</td>
-          <td><span class="etiqueta">{{ u.rol }}</span></td>
-        </tr>
-      } @empty {
-        <tr><td colspan="4">No hay usuarios registrados.</td></tr>
-      }
-    </tbody>
-  </table>
 }
+
+<table class="tabla" [class.cargando]="cargando()">
+  <thead>
+    <tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Rol</th></tr>
+  </thead>
+  <tbody>
+    @for (u of usuarios(); track u.id) {
+      <tr>
+        <td><a [routerLink]="['/usuarios', u.id]">{{ u.nombre }} {{ u.apellido }}</a></td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.telefono ?? '—' }}</td>
+        <td><span class="etiqueta">{{ u.rol }}</span></td>
+      </tr>
+    } @empty {
+      <tr><td colspan="4">{{ cargando() ? 'Cargando…' : 'No hay usuarios que coincidan con la búsqueda.' }}</td></tr>
+    }
+  </tbody>
+</table>

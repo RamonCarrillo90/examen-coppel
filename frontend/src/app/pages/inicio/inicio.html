@@ -1,0 +1,19 @@
+<h1>{{ saludo() }}</h1>
+<p class="subtitulo">¿Qué quieres revisar?</p>
+
+@if (error(); as mensaje) {
+  <p class="alerta">{{ mensaje }}</p>
+}
+
+<div class="menu">
+  @for (t of tarjetas(); track t.ruta) {
+    <a class="tarjeta opcion" [routerLink]="t.ruta">
+      <h2>{{ t.titulo }}</h2>
+      <p>{{ t.resumen }}</p>
+    </a>
+  } @empty {
+    @if (!error()) {
+      <p>Cargando…</p>
+    }
+  }
+</div>

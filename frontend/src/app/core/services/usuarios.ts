@@ -1,8 +1,8 @@
 import { inject, Service } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { Usuario, UsuarioConTareas, UsuarioPayload } from '../models/usuario';
+import { FiltroUsuarios, Usuario, UsuarioConTareas, UsuarioPayload } from '../models/usuario';
 
 /** Usuarios envuelve los endpoints /api/usuarios de la API. */
 @Service()
@@ -10,8 +10,12 @@ export class Usuarios {
     private readonly http = inject(HttpClient);
     private readonly url = '/api/usuarios';
 
-    listar(): Observable<Usuario[]> {
-        return this.http.get<Usuario[]>(this.url);
+     /** Lista de usuarios con filtros opcionales (solo admin). */
+    listar(filtros: FiltroUsuarios = {}): Observable<Usuario[]> {
+        let params = new HttpParams();
+        if (filtros.q) params = params.set('q', filtros.q);
+        if (filtros.rol) params = params.set('rol', filtros.rol);
+        return this.http.get<Usuario[]>(this.url, { params });
     }
 
     obtener(id: number): Observable<UsuarioConTareas> {
@@ -29,4 +33,6 @@ export class Usuarios {
     eliminar(id: number): Observable<void> {
         return this.http.delete<void>(`${this.url}/${id}`);
     }
+
+
 }

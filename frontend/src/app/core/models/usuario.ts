@@ -29,3 +29,9 @@ export interface UsuarioPayload {
   password?: string;
   rol?: Rol;
 }
+
+/** Filtros opcionales de GET /api/usuarios (los vacíos no se mandan). */
+export interface FiltroUsuarios {
+  q?: string;
+  rol?: Rol | '';
+}

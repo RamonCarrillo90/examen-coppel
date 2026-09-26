@@ -404,3 +404,83 @@ Authorization: Bearer {{login.response.body.token}}
 ### TL6. Intento de inyección → 200 con [] (y la tabla sigue viva)
 GET {{baseUrl}}/tareas?q='; DROP TABLE tareas; --
 Authorization: Bearer {{login.response.body.token}}
+
+
+
+### E1. Crear tarea SIN usuario → 201 con "usuario_id": null y "estatus": "pendiente"
+# @name sinUsuario
+POST {{baseUrl}}/tareas
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Inventario de bodega",
+  "descripcion": "Nadie la ha tomado todavía"
+}
+
+### E2. Crear tarea CON usuario por la ruta nueva → 201 con su usuario_id
+POST {{baseUrl}}/tareas
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Asignada desde la página de tareas",
+  "usuario_id": {{nuevo.response.body.id}}
+}
+
+### E3. Crear con un usuario que no existe → 400
+POST {{baseUrl}}/tareas
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Usuario fantasma",
+  "usuario_id": 99999
+}
+
+### E4. Ana intenta crear por la ruta nueva → 403
+POST {{baseUrl}}/tareas
+Authorization: Bearer {{loginAna.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "No debería poder"
+}
+
+### E5. Ana intenta ver la tarea sin usuario → 404
+GET {{baseUrl}}/tareas/{{sinUsuario.response.body.id}}
+Authorization: Bearer {{loginAna.response.body.token}}
+
+### E6. Admin ve la tarea sin usuario → 200
+GET {{baseUrl}}/tareas/{{sinUsuario.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### E7. Listar solo las sin asignar → 200, todas con "usuario_id": null
+GET {{baseUrl}}/tareas?sin_asignar=true
+Authorization: Bearer {{login.response.body.token}}
+
+### E8. Filtros contradictorios → 400
+GET {{baseUrl}}/tareas?sin_asignar=true&usuario_id=1
+Authorization: Bearer {{login.response.body.token}}
+
+### E9. Asignar la tarea sin usuario a Ana (PUT) → 200 con su usuario_id
+PUT {{baseUrl}}/tareas/{{sinUsuario.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Inventario de bodega",
+  "usuario_id": {{nuevo.response.body.id}},
+  "estatus": "pendiente"
+}
+
+### E10. Desasignarla otra vez (usuario_id null) → 200 con "usuario_id": null
+PUT {{baseUrl}}/tareas/{{sinUsuario.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Inventario de bodega",
+  "usuario_id": null,
+  "estatus": "pendiente"
+}

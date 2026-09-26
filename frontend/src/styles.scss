@@ -100,3 +100,16 @@ h1, h2 { margin: 0 0 0.75rem; }
   border-radius: var(--radio);
   background: #f3f4f6;
 }
+
+.filtros { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
+.filtros input, .filtros select {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  font: inherit;
+  background: #fff;
+}
+.filtros input[type='search'] { flex: 1; min-width: 220px; }
+.tabla.cargando { opacity: 0.6; }
+.sin-asignar { background: #fee2e2; }
+.descripcion { display: block; color: #6b7280; margin-top: 0.2rem; }

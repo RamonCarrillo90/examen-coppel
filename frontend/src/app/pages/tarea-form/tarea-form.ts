@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
+import { Location } from '@angular/common';
 import {
   AbstractControl,
   FormBuilder,
@@ -6,7 +7,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
 
 import { ESTATUS, ETIQUETAS_ESTATUS, Estatus, Tarea } from '../../core/models/tarea';
@@ -17,11 +18,14 @@ import { mensajeError } from '../../core/utils/errores';
 import { hoyLocal } from '../../core/utils/fechas';
 
 /**
- * Formulario para crear (/usuarios/:usuarioId/tareas/nueva) o editar
- * (/tareas/:id/editar) una tarea. Cambiar "Asignada a" al editar es REASIGNAR.
+ * Formulario de tareas. Tiene tres modos, según la ruta:
+ * - /usuarios/:usuarioId/tareas/nueva → crear desde un perfil: el usuario es fijo.
+ * - /tareas/nueva                     → crear desde la página de tareas: se elige usuario o "Sin asignar".
+ * - /tareas/:id/editar                → editar: se puede reasignar, desasignar y cambiar estatus.
+ * Al crear, el estatus siempre es "pendiente" (lo fija el backend).
  */
 @Component({
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule],
   selector: 'app-tarea-form',
   styleUrl: './tarea-form.scss',
   templateUrl: './tarea-form.html',
@@ -30,25 +34,27 @@ export class TareaForm implements OnInit {
   private readonly tareasService = inject(Tareas);
   private readonly usuariosService = inject(Usuarios);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
 
   /** :id de la tarea (solo al editar). */
   readonly id = input<string>();
-  /** :usuarioId del dueño (solo al crear). */
+  /** :usuarioId del dueño (solo al crear desde un perfil). */
   readonly usuarioId = input<string>();
 
   protected readonly esEdicion = computed(() => this.id() !== undefined);
+  protected readonly desdePerfil = computed(() => this.usuarioId() !== undefined);
 
   protected readonly estatus = ESTATUS;
   protected readonly etiquetas = ETIQUETAS_ESTATUS;
 
   /** Usuarios para el selector "Asignada a". */
   protected readonly usuarios = signal<Usuario[]>([]);
-  /** Dueño original: a su detalle regresa "Cancelar". */
-  protected readonly duenoOriginal = signal<number | null>(null);
-  /**dueño de la tarea al crear se muestra fijo y sin selector */
+
+  /** Dueño fijo al crear desde un perfil. */
   protected readonly dueno = computed(() =>
-    this.usuarios().find((u) => u.id ===this.duenoOriginal()), //busca en la lista de usuarios al que es dueño del perfil para  mostrarlo
-);
+    this.usuarios().find((u) => u.id === Number(this.usuarioId())),
+  );
+
   /** Hoy en "AAAA-MM-DD": también es el [min] del calendario. */
   protected readonly hoy = hoyLocal();
   /** Fecha que ya tenía la tarea al editar (puede estar vencida y se permite conservarla). */
@@ -59,7 +65,7 @@ export class TareaForm implements OnInit {
     descripcion: ['', Validators.maxLength(1000)],
     fecha_limite: ['', (c: AbstractControl<string>) => this.validarFecha(c)], // "AAAA-MM-DD" o vacío
     estatus: ['pendiente' as Estatus],
-    usuario_id: [0, Validators.min(1)],
+    usuario_id: [null as number | null], // null = sin asignar
   });
 
   protected readonly cargando = signal(true);
@@ -85,11 +91,8 @@ export class TareaForm implements OnInit {
             estatus: tarea.estatus,
             usuario_id: tarea.usuario_id,
           });
-          this.duenoOriginal.set(tarea.usuario_id);
-        } else {
-          const dueno = Number(this.usuarioId());
-          this.form.patchValue({ usuario_id: dueno });
-          this.duenoOriginal.set(dueno);
+        } else if (this.desdePerfil()) {
+          this.form.patchValue({ usuario_id: Number(this.usuarioId()) });
         }
         this.cargando.set(false);
       },
@@ -117,6 +120,11 @@ export class TareaForm implements OnInit {
     return !!control && control.touched && control.invalid;
   }
 
+  /** Regresa a la pantalla desde donde se llegó (perfil, lista de tareas...). */
+  protected volver(): void {
+    this.location.back();
+  }
+
   protected guardar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -129,17 +137,25 @@ export class TareaForm implements OnInit {
       descripcion: v.descripcion.trim() || null,
       fecha_limite: v.fecha_limite || null,
     };
-    
-    //al crear no se manda el estatus, el backend siempre la crea pendiente
-    const peticion: Observable<Tarea> = this.esEdicion()
-      ? this.tareasService.actualizar(Number(this.id()), { ...datos,estatus: v.estatus, usuario_id: v.usuario_id })
-      : this.tareasService.crear(v.usuario_id, datos);
+
+    // Al crear NO se manda estatus: el backend siempre la crea "pendiente".
+    let peticion: Observable<Tarea>;
+    if (this.esEdicion()) {
+      peticion = this.tareasService.actualizar(Number(this.id()), {
+        ...datos,
+        estatus: v.estatus,
+        usuario_id: v.usuario_id,
+      });
+    } else if (this.desdePerfil()) {
+      peticion = this.tareasService.crear(Number(this.usuarioId()), datos);
+    } else {
+      peticion = this.tareasService.crearGeneral({ ...datos, usuario_id: v.usuario_id });
+    }
 
     this.enviando.set(true);
     this.error.set(null);
     peticion.subscribe({
-      // Se regresa al detalle del dueño FINAL (si se reasignó, al del nuevo dueño).
-      next: (t) => this.router.navigate(['/usuarios', t.usuario_id]),
+      next: () => this.volver(),
       error: (err) => {
         this.error.set(mensajeError(err, 'No se pudo guardar la tarea'));
         this.enviando.set(false);

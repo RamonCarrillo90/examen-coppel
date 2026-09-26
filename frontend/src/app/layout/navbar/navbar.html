@@ -1,11 +1,14 @@
 <header class="navbar">
-  <a class="marca" [routerLink]="auth.rutaInicio()">Gestión de tareas</a>
+  <a class="marca" routerLink="/inicio">Gestión de tareas</a>
 
   <nav>
+    <a routerLink="/inicio" routerLinkActive="activo">Inicio</a>
     @if (auth.esAdmin()) {
       <a routerLink="/usuarios" routerLinkActive="activo">Usuarios</a>
+      <a routerLink="/tareas" routerLinkActive="activo">Tareas</a>
     } @else if (auth.usuario(); as u) {
       <a [routerLink]="['/usuarios', u.id]" routerLinkActive="activo">Mis tareas</a>
+      <a routerLink="/disponibles" routerLinkActive="activo">Disponibles</a>
     }
   </nav>
 

@@ -53,11 +53,8 @@ actualizarUsuario(usuario: Usuario): void {
   this._usuario.set(usuario);
 }
 
-  /** Pantalla de inicio según el rol: el admin ve la lista; el usuario, su propio detalle. */
   rutaInicio(): string {
-    const usuario = this._usuario();
-    if (!usuario) return '/login';
-    return usuario.rol === 'admin' ? '/usuarios' : `/usuarios/${usuario.id}`;
+    return this._usuario() ? '/inicio' : '/login';
   }
 }
 
@@ -70,4 +67,3 @@ function leerUsuarioGuardado(): Usuario | null {
     return null;
   }
 }
-

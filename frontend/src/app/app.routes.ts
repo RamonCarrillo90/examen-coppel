@@ -18,6 +18,26 @@ export const routes: Routes = [
       // "/" lleva a la pantalla de inicio según el rol.
     { path: '', pathMatch: 'full', redirectTo: () => inject(Auth).rutaInicio() },
     {
+        path: 'inicio',
+        loadComponent: () => import('./pages/inicio/inicio').then((m) => m.Inicio),
+    },
+    {
+        path: 'tareas',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+        import('./pages/tareas-lista/tareas-lista').then((m) => m.TareasLista),
+    },
+    {
+        path: 'tareas/nueva',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./pages/tarea-form/tarea-form').then((m) => m.TareaForm),
+    },
+    {
+        path: 'disponibles',
+        loadComponent: () =>
+        import('./pages/disponibles/disponibles').then((m) => m.Disponibles),
+    },
+    {
         path: 'usuarios',
         canActivate: [adminGuard],
         loadComponent: () =>

@@ -282,7 +282,7 @@ func (h *TareaHandler) Actualizar(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		slog.Error("error al actualizar tarea", "id", tareaID, "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "error") //500
+		httpx.WriteError(w, http.StatusInternalServerError, "error interno") //500
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, tarea)
@@ -435,6 +435,29 @@ func (h *TareaHandler) CrearGeneral(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.WriteJSON(w, http.StatusCreated, tarea)
+}
+
+// Disponibles maneja GET /api/tareas/disponibles: las tareas sin usuario asignado.
+// Cualquier usuario con sesión puede verlas.
+func (h *TareaHandler) Disponibles(w http.ResponseWriter, r *http.Request) {
+	//declaramos cuales seran los valores de nuestro filtro
+	f := repository.FiltroTareas{
+		SinAsignar: true,
+		Texto:      strings.TrimSpace(r.URL.Query().Get("q")), // búsqueda opcional,
+	}
+
+	if utf8.RuneCountInString(f.Texto) > 100 {
+		httpx.WriteError(w, http.StatusBadRequest, "la busqueda no puede tener mas de 100 caracteres")
+		return
+	}
+
+	tareas, err := h.repo.Listar(r.Context(), f)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "error interno")
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, tareas)
 }
 
 func (r *crearTareaGeneralRequest) validar() error {

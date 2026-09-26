@@ -49,24 +49,31 @@
         }
       </div>
 
-      @if (esEdicion()) {
+      @if (desdePerfil()) {
+        <!-- Al crear desde un perfil, el usuario es fijo: el del perfil. -->
+        <div class="campo">
+          <span>Asignada a</span>
+          <p class="valor-fijo">
+            @if (dueno(); as u) {
+              {{ u.nombre }} {{ u.apellido }} ({{ u.email }})
+            }
+          </p>
+        </div>
+      } @else {
         <label class="campo">
           <span>Asignada a</span>
           <select formControlName="usuario_id">
+            <option [ngValue]="null">Sin asignar</option>
             @for (u of usuarios(); track u.id) {
               <option [ngValue]="u.id">{{ u.nombre }} {{ u.apellido }} ({{ u.email }})</option>
             }
           </select>
-          <small class="ayuda">Cambiar el usuario reasigna la tarea.</small>
-        </label>
-      } @else {
-        <!-- Al crear desde un perfil, el usuario es fijo: el del perfil. -->
-        <div class="campo">
-          <span>Asignada a</span>
-          @if (dueno(); as u) {
-            <p class="valor-fijo">{{ u.nombre }} {{ u.apellido }} ({{ u.email }})</p>
+          @if (esEdicion()) {
+            <small class="ayuda">Cambiar el usuario reasigna la tarea; "Sin asignar" la deja disponible.</small>
+          } @else {
+            <small class="ayuda">Si la dejas sin asignar, los usuarios la verán en "Disponibles".</small>
           }
-        </div>
+        </label>
       }
 
       @if (error(); as mensaje) {
@@ -74,7 +81,7 @@
       }
 
       <div class="form-acciones">
-        <a class="btn btn-secundario" [routerLink]="['/usuarios', duenoOriginal()]">Cancelar</a>
+        <button type="button" class="btn btn-secundario" (click)="volver()">Cancelar</button>
         <button type="submit" class="btn" [disabled]="enviando()">
           {{ enviando() ? 'Guardando…' : 'Guardar' }}
         </button>

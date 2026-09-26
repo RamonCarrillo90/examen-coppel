@@ -30,27 +30,44 @@
           }
         </label>
 
-        <label class="campo">
-          <span>Estatus</span>
-          <select formControlName="estatus">
-            @for (e of estatus; track e) {
-              <option [value]="e">{{ etiquetas[e] }}</option>
-            }
-          </select>
-        </label>
+        @if (esEdicion()) {
+          <label class="campo">
+            <span>Estatus</span>
+            <select formControlName="estatus">
+              @for (e of estatus; track e) {
+                <option [value]="e">{{ etiquetas[e] }}</option>
+              }
+            </select>
+          </label>
+        } @else {
+          <!-- Al crear, el estatus es fijo: toda tarea nueva nace pendiente. -->
+          <div class="campo">
+            <span>Estatus</span>
+            <p class="valor-fijo">Pendiente</p>
+            <small class="ayuda">Toda tarea nueva inicia como pendiente.</small>
+          </div>
+        }
       </div>
 
-      <label class="campo">
-        <span>Asignada a</span>
-        <select formControlName="usuario_id">
-          @for (u of usuarios(); track u.id) {
-            <option [ngValue]="u.id">{{ u.nombre }} {{ u.apellido }} ({{ u.email }})</option>
-          }
-        </select>
-        @if (esEdicion()) {
+      @if (esEdicion()) {
+        <label class="campo">
+          <span>Asignada a</span>
+          <select formControlName="usuario_id">
+            @for (u of usuarios(); track u.id) {
+              <option [ngValue]="u.id">{{ u.nombre }} {{ u.apellido }} ({{ u.email }})</option>
+            }
+          </select>
           <small class="ayuda">Cambiar el usuario reasigna la tarea.</small>
-        }
-      </label>
+        </label>
+      } @else {
+        <!-- Al crear desde un perfil, el usuario es fijo: el del perfil. -->
+        <div class="campo">
+          <span>Asignada a</span>
+          @if (dueno(); as u) {
+            <p class="valor-fijo">{{ u.nombre }} {{ u.apellido }} ({{ u.email }})</p>
+          }
+        </div>
+      }
 
       @if (error(); as mensaje) {
         <p class="alerta">{{ mensaje }}</p>

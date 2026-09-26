@@ -60,9 +60,12 @@
             </select>
           </td>
           @if (auth.esAdmin()) {
-            <td class="acciones">
-              <a class="btn btn-secundario btn-chico" [routerLink]="['/tareas', t.id, 'editar']">Editar</a>
-              <button type="button" class="btn btn-peligro btn-chico" (click)="eliminarTarea(t)">Eliminar</button>
+            <td>
+              <!-- El flex va en un div interno: si va en el <td>, deja de comportarse como celda. -->
+              <div class="acciones">
+                <a class="btn btn-secundario btn-chico" [routerLink]="['/tareas', t.id, 'editar']">Editar</a>
+                <button type="button" class="btn btn-peligro btn-chico" (click)="eliminarTarea(t)">Eliminar</button>
+              </div>
             </td>
           }
         </tr>

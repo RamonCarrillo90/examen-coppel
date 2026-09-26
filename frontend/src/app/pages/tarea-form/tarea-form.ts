@@ -45,7 +45,10 @@ export class TareaForm implements OnInit {
   protected readonly usuarios = signal<Usuario[]>([]);
   /** Dueño original: a su detalle regresa "Cancelar". */
   protected readonly duenoOriginal = signal<number | null>(null);
-
+  /**dueño de la tarea al crear se muestra fijo y sin selector */
+  protected readonly dueno = computed(() =>
+    this.usuarios().find((u) => u.id ===this.duenoOriginal()), //busca en la lista de usuarios al que es dueño del perfil para  mostrarlo
+);
   /** Hoy en "AAAA-MM-DD": también es el [min] del calendario. */
   protected readonly hoy = hoyLocal();
   /** Fecha que ya tenía la tarea al editar (puede estar vencida y se permite conservarla). */
@@ -125,11 +128,11 @@ export class TareaForm implements OnInit {
       titulo: v.titulo.trim(),
       descripcion: v.descripcion.trim() || null,
       fecha_limite: v.fecha_limite || null,
-      estatus: v.estatus,
     };
-
+    
+    //al crear no se manda el estatus, el backend siempre la crea pendiente
     const peticion: Observable<Tarea> = this.esEdicion()
-      ? this.tareasService.actualizar(Number(this.id()), { ...datos, usuario_id: v.usuario_id })
+      ? this.tareasService.actualizar(Number(this.id()), { ...datos,estatus: v.estatus, usuario_id: v.usuario_id })
       : this.tareasService.crear(v.usuario_id, datos);
 
     this.enviando.set(true);

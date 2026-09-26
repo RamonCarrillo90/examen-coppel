@@ -21,9 +21,10 @@ type TareaRepository struct {
 
 // Filtro tareas son los filtros opcionales de GET /api/tareas
 type FiltroTareas struct {
-	Texto     string //buscalo titulo y descripcion
-	Estatus   string
-	UsuarioID *int
+	Texto      string //buscalo titulo y descripcion
+	Estatus    string
+	UsuarioID  *int
+	SinAsignar bool
 }
 
 // NewTareaRepository crea un repositorio que usa el pool de conexiones de db
@@ -191,6 +192,9 @@ func (r *TareaRepository) Listar(ctx context.Context, f FiltroTareas) ([]models.
 	if f.UsuarioID != nil {
 		args = append(args, *f.UsuarioID)
 		condiciones = append(condiciones, fmt.Sprintf("usuario_id = $%d", len(args)))
+	}
+	if f.SinAsignar {
+		condiciones = append(condiciones, "usuario_id IS NULL")
 	}
 	//Aqui hacemos la consulta ya con los filtros
 	query := "SELECT " + columnasTarea + " FROM tareas"

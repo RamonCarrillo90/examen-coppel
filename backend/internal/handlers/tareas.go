@@ -383,6 +383,11 @@ func (h *TareaHandler) Listar(w http.ResponseWriter, r *http.Request) {
 		}
 		f.UsuarioID = &id
 	}
+	f.SinAsignar = q.Get("sin_asignar") == "true"
+	if f.SinAsignar && f.UsuarioID != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "no se puede filtrar por usuario y sin asignar a la vez")
+		return
+	}
 
 	tareas, err := h.repo.Listar(r.Context(), f)
 	if err != nil {

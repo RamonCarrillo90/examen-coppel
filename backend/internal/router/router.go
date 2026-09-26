@@ -29,11 +29,11 @@ func New(h Handlers, jwtSecret []byte) http.Handler {
 	// --- Sistema -------------------------------------------------------------
 	mux.HandleFunc("GET /api/health", h.Health.Check)
 
-	// --- Autenticación (jueves) ----------------------------------------------
+	// --- Autenticación  ----------------------------------------------
 	mux.HandleFunc("POST /api/auth/login", h.Auth.Login)                     //publico
 	mux.Handle("GET /api/auth/me", autenticado(http.HandlerFunc(h.Auth.Me))) // privado
 
-	// --- Usuarios (jueves) ---------------------------------------------------
+	// --- Usuarios---------------------------------------------------
 	//la regla es: sin middlewares handleFunc con middlewares = Handle
 	mux.Handle("GET /api/usuarios", autenticado(RequireAdmin(http.HandlerFunc(h.Usuario.Listar))))
 	mux.Handle("GET /api/usuarios/{id}", autenticado(http.HandlerFunc(h.Usuario.Obtener)))
@@ -41,13 +41,13 @@ func New(h Handlers, jwtSecret []byte) http.Handler {
 	mux.Handle("PUT /api/usuarios/{id}", autenticado(http.HandlerFunc(h.Usuario.Actualizar)))
 	mux.Handle("DELETE /api/usuarios/{id}", autenticado(RequireAdmin(http.HandlerFunc(h.Usuario.Eliminar))))
 
-	// --- Tareas (viernes) ----------------------------------------------------
+	// --- Tareas ----------------------------------------------------
 	mux.Handle("POST /api/usuarios/{id}/tareas", autenticado(RequireAdmin(http.HandlerFunc(h.Tarea.Crear))))
 	mux.Handle("GET /api/tareas/{id}", autenticado(http.HandlerFunc(h.Tarea.Obtener)))
 	mux.Handle("PUT /api/tareas/{id}", autenticado(RequireAdmin(http.HandlerFunc(h.Tarea.Actualizar))))
 	mux.Handle("PATCH /api/tareas/{id}/estatus", autenticado(http.HandlerFunc(h.Tarea.CambiarEstatus)))
 	mux.Handle("DELETE /api/tareas/{id}", autenticado(http.HandlerFunc(h.Tarea.Eliminar)))
-
+	mux.Handle("GET /api/tareas", autenticado(RequireAdmin(http.HandlerFunc(h.Tarea.Listar))))
 	// Los middlewares se aplican de afuera hacia adentro:
 	// recoverPanics -> logRequests -> mux
 	return recoverPanics(logRequests(mux))

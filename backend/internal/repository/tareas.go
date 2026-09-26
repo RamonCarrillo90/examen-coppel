@@ -5,6 +5,7 @@ import (
 	"errors"
 	"examen-coppel/backend/internal/models"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -16,6 +17,13 @@ var ErrUsuarioNoExiste = errors.New("el usuario no existe")
 
 type TareaRepository struct {
 	db *pgxpool.Pool
+}
+
+// Filtro tareas son los filtros opcionales de GET /api/tareas
+type FiltroTareas struct {
+	Texto     string //buscalo titulo y descripcion
+	Estatus   string
+	UsuarioID *int
 }
 
 // NewTareaRepository crea un repositorio que usa el pool de conexiones de db
@@ -163,4 +171,52 @@ func (r *TareaRepository) Eliminar(ctx context.Context, id int) error {
 		return ErrNoEncontrado
 	}
 	return nil
+}
+
+func (r *TareaRepository) Listar(ctx context.Context, f FiltroTareas) ([]models.Tarea, error) {
+	condiciones := []string{} //creamos la condicion
+	args := []any{}
+
+	// Cada filtro agrega su valor a args y usa $N con N = posición en args.
+	// El texto del usuario NUNCA se pega en la consulta: siempre viaja como parámetro.
+	if f.Texto != "" {
+		args = append(args, "%"+f.Texto+"%")
+		n := len(args)
+		condiciones = append(condiciones, fmt.Sprintf("(titulo ILIKE $%d OR descripcion ILIKE $%d)", n, n))
+	}
+	if f.Estatus != "" {
+		args = append(args, f.Estatus)
+		condiciones = append(condiciones, fmt.Sprintf("estatus = $%d", len(args)))
+	}
+	if f.UsuarioID != nil {
+		args = append(args, *f.UsuarioID)
+		condiciones = append(condiciones, fmt.Sprintf("usuario_id = $%d", len(args)))
+	}
+	//Aqui hacemos la consulta ya con los filtros
+	query := "SELECT " + columnasTarea + " FROM tareas"
+	if len(condiciones) > 0 {
+		query += " WHERE " + strings.Join(condiciones, " AND ")
+	}
+	query += " ORDER BY id"
+
+	rows, err := r.db.Query(ctx, query, args...)
+
+	if err != nil {
+		return nil, fmt.Errorf("listar tareas: %w", err)
+	}
+	defer rows.Close() // Para liberar la conexion de vuelta al pool
+
+	tareas := []models.Tarea{} //creamos el arreglo donde meteremos todas nuestras tareas
+	for rows.Next() {
+		var t models.Tarea                              //creamos el contenedor vacio
+		if err := escanearTarea(rows, &t); err != nil { // copia la fila a u y revisa errores
+			return nil, fmt.Errorf("listar tareas: %w", err)
+		}
+
+		tareas = append(tareas, t) //agregamos la tarea a la lista
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("listar tareas: %w", err)
+	}
+	return tareas, nil
 }

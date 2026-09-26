@@ -8,6 +8,7 @@ import (
 	"examen-coppel/backend/internal/repository"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -348,4 +349,40 @@ func hoy() time.Time {
 // mismaFecha dice si dos fechas opcionales son el mismo día.
 func mismaFecha(a, b *time.Time) bool {
 	return a != nil && b != nil && a.Equal(*b)
+}
+
+// Listar maneja GET api/tareas
+// solamente el admin puede listar tareas el permiso lo da RequireAdmin en el router
+func (h *TareaHandler) Listar(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	f := repository.FiltroTareas{
+		Texto:   strings.TrimSpace(q.Get("q")),
+		Estatus: q.Get("estatus"),
+	}
+
+	if utf8.RuneCountInString(f.Texto) > 100 {
+		httpx.WriteError(w, http.StatusBadRequest, "la búsqueda no puede tener más de 100 caracteres")
+		return
+	}
+	if f.Estatus != "" && !esEstatusValido(f.Estatus) {
+		httpx.WriteError(w, http.StatusBadRequest, "estatus inválido")
+		return
+	}
+	if v := q.Get("usuario_id"); v != "" {
+		id, err := strconv.Atoi(v)
+		if err != nil || id <= 0 {
+			httpx.WriteError(w, http.StatusBadRequest, "usuario_id inválido")
+			return
+		}
+		f.UsuarioID = &id
+	}
+
+	tareas, err := h.repo.Listar(r.Context(), f)
+	if err != nil {
+		slog.Error("error al listar tareas", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "error interno")
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, tareas)
 }

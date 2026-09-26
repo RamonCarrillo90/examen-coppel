@@ -9,7 +9,7 @@ Content-Type: application/json
 
 {
   "email": "admin@gmail.com",
-  "password": "ContaEjemplo"
+  "password": "admin123"
 }
 
 ### Contraseña incorrecta → 401 "credenciales inválidas"
@@ -380,3 +380,27 @@ Content-Type: application/json
   "titulo": "No debería crearse",
   "estatus": "completada"
 }
+
+### TL1. Admin lista todas las tareas → 200
+GET {{baseUrl}}/tareas
+Authorization: Bearer {{login.response.body.token}}
+
+### TL2. Ana intenta listar todas → 403
+GET {{baseUrl}}/tareas
+Authorization: Bearer {{loginAna.response.body.token}}
+
+### TL3. Buscar por texto → solo las que contienen "reporte"
+GET {{baseUrl}}/tareas?q=reporte
+Authorization: Bearer {{login.response.body.token}}
+
+### TL4. Filtros combinados
+GET {{baseUrl}}/tareas?estatus=pendiente&usuario_id={{nuevo.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### TL5. Estatus inválido → 400
+GET {{baseUrl}}/tareas?estatus=terminada
+Authorization: Bearer {{login.response.body.token}}
+
+### TL6. Intento de inyección → 200 con [] (y la tabla sigue viva)
+GET {{baseUrl}}/tareas?q='; DROP TABLE tareas; --
+Authorization: Bearer {{login.response.body.token}}

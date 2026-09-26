@@ -5,8 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"examen-coppel/backend/internal/models"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -25,6 +27,11 @@ var (
 // Es seguro usarlo desde varias goroutines, porque el pool maneja la concurrencia.
 type UsuarioRepository struct {
 	db *pgxpool.Pool
+}
+
+type FiltroUsuarios struct {
+	Texto string
+	Rol   string
 }
 
 // NewUsuarioRepository crea un repositorio que usa el pool de conexiones de db
@@ -115,12 +122,32 @@ func (r *UsuarioRepository) ObtenerPorEmail(ctx context.Context, email string) (
 	return &u, nil
 }
 
-func (r *UsuarioRepository) Listar(ctx context.Context) ([]models.Usuario, error) {
-	query := "SELECT " + columnasUsuario + " FROM  usuarios ORDER BY id"
+func (r *UsuarioRepository) Listar(ctx context.Context, f FiltroUsuarios) ([]models.Usuario, error) {
+	condiciones := []string{}
+	args := []any{}
 
-	rows, err := r.db.Query(ctx, query)
+	if f.Texto != "" {
+		args = append(args, "%"+f.Texto+"%")
+		n := len(args)
+		condiciones = append(condiciones, fmt.Sprintf(
+			"(nombre ILIKE $%d OR apellido ILIKE $%d OR email ILIKE $%d)", n, n, n))
+	}
+	if f.Rol != "" {
+		args = append(args, f.Rol)
+		condiciones = append(condiciones, fmt.Sprintf("rol = $%d", len(args)))
+	}
+	// Cada filtro agrega su valor a args y usa $N con N = posición en args.
+	// El texto del usuario NUNCA se pega en la consulta: siempre viaja como parámetro.
+
+	query := "SELECT " + columnasUsuario + " FROM usuarios"
+	if len(condiciones) > 0 {
+		query += " WHERE " + strings.Join(condiciones, " AND ")
+	}
+	query += " ORDER BY id"
+
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("listar usuarios: %w", err)
+		return nil, fmt.Errorf("error al listar los usuarios: %w", err)
 	}
 	defer rows.Close() //Libera la conexion de vuelta al pool, esta linea se ejecuta hasta que el metodo termine
 

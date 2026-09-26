@@ -183,10 +183,29 @@ func esSoloNumeros(s string) bool {
 	return true
 }
 
-// Listar maneja GET /api/usuarios: devuelve todos los usuarios.
+// / Listar maneja GET /api/usuarios: devuelve los usuarios, con filtros opcionales:
+//
+//	?q=texto   busca en nombre, apellido y email
+//	?rol=admin|usuario
+//
 // Solo para admins; el permiso lo aplica RequireAdmin en el router.
 func (h *UsuarioHandler) Listar(w http.ResponseWriter, r *http.Request) {
-	usuarios, err := h.repo.Listar(r.Context()) //r.Context(): si el cliente cancela la petición, la consulta también se cancela.
+	q := r.URL.Query()
+	f := repository.FiltroUsuarios{
+		Texto: strings.TrimSpace(q.Get("q")),
+		Rol:   q.Get("rol"),
+	}
+
+	if utf8.RuneCountInString(f.Texto) > 100 {
+		httpx.WriteError(w, http.StatusBadRequest, "la búsqueda no puede tener más de 100 caracteres")
+		return
+	}
+	if f.Rol != "" && !esRolValido(f.Rol) {
+		httpx.WriteError(w, http.StatusBadRequest, "rol inválido: debe ser admin o usuario")
+		return
+	}
+
+	usuarios, err := h.repo.Listar(r.Context(), f)
 	if err != nil {
 		slog.Error("error al listar usuarios", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "error interno")

@@ -59,6 +59,7 @@ func run() error {
 	// 2. Repositorios (acceso a datos)
 	usuarioRepo := repository.NewUsuarioRepository(pool)
 	tareaRepo := repository.NewTareaRepository(pool)
+	solicitudRepo := repository.NewSolicitudRepository(pool)
 
 	// 3. Admin inicial
 	if err := seed.CrearAdminSiNoExiste(ctx, usuarioRepo, cfg.AdminEmail, cfg.AdminPassword); err != nil {
@@ -72,15 +73,17 @@ func run() error {
 	authHandler := handlers.NewAuthHandler(usuarioRepo, jwtSecret)
 	usuarioHandler := handlers.NewUsuarioHandler(usuarioRepo, tareaRepo)
 	tareaHandler := handlers.NewTareaHandler(tareaRepo)
+	solicitudHandler := handlers.NewSolicitudHandler(solicitudRepo)
 
 	// 5. Servidor con el router
 	srv := &http.Server{
 		Addr: ":" + cfg.Port,
 		Handler: router.New(router.Handlers{
-			Health:  healthHandler,
-			Auth:    authHandler,
-			Usuario: usuarioHandler,
-			Tarea:   tareaHandler,
+			Health:    healthHandler,
+			Auth:      authHandler,
+			Usuario:   usuarioHandler,
+			Tarea:     tareaHandler,
+			Solicitud: solicitudHandler,
 		}, jwtSecret),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,

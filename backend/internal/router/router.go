@@ -10,10 +10,11 @@ import (
 
 // Handlers agrupa todos los handlers de la API.
 type Handlers struct {
-	Health  *handlers.HealthHandler
-	Auth    *handlers.AuthHandler
-	Usuario *handlers.UsuarioHandler
-	Tarea   *handlers.TareaHandler
+	Health    *handlers.HealthHandler
+	Auth      *handlers.AuthHandler
+	Usuario   *handlers.UsuarioHandler
+	Tarea     *handlers.TareaHandler
+	Solicitud *handlers.SolicitudHandler
 }
 
 // New construye el enrutador HTTP con sus middlewares.
@@ -50,6 +51,13 @@ func New(h Handlers, jwtSecret []byte) http.Handler {
 	mux.Handle("GET /api/tareas", autenticado(RequireAdmin(http.HandlerFunc(h.Tarea.Listar))))
 	mux.Handle("POST /api/tareas", autenticado(RequireAdmin(http.HandlerFunc(h.Tarea.CrearGeneral))))
 	mux.Handle("GET /api/tareas/disponibles", autenticado(http.HandlerFunc(h.Tarea.Disponibles)))
+
+	// Solicitudes de tareas disponibles
+	mux.Handle("POST /api/tareas/{id}/solicitudes", autenticado(http.HandlerFunc(h.Solicitud.Crear)))
+	mux.Handle("GET /api/solicitudes/mias", autenticado(http.HandlerFunc(h.Solicitud.Mias)))
+	mux.Handle("GET /api/solicitudes", autenticado(RequireAdmin(http.HandlerFunc(h.Solicitud.Listar))))
+	mux.Handle("POST /api/solicitudes/{id}/aprobar", autenticado(RequireAdmin(http.HandlerFunc(h.Solicitud.Aprobar))))
+	mux.Handle("POST /api/solicitudes/{id}/rechazar", autenticado(RequireAdmin(http.HandlerFunc(h.Solicitud.Rechazar))))
 	// Los middlewares se aplican de afuera hacia adentro:
 	// recoverPanics -> logRequests -> mux
 	return recoverPanics(logRequests(mux))

@@ -484,3 +484,85 @@ Content-Type: application/json
   "usuario_id": null,
   "estatus": "pendiente"
 }
+
+### ═════════════════════════════════════════════
+### SOLICITUDES
+### ═════════════════════════════════════════════
+
+### S0. Admin crea una tarea sin usuario (se guarda como "libre")
+# @name libre
+POST {{baseUrl}}/tareas
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Tarea para solicitar"
+}
+
+### S1. Ana la solicita → 201 con "estatus": "pendiente" (se guarda como "solAna")
+# @name solAna
+POST {{baseUrl}}/tareas/{{libre.response.body.id}}/solicitudes
+Authorization: Bearer {{loginAna.response.body.token}}
+Content-Type: application/json
+
+{}
+
+### S2. Ana la solicita otra vez → 409 "ya solicitaste esta tarea"
+POST {{baseUrl}}/tareas/{{libre.response.body.id}}/solicitudes
+Authorization: Bearer {{loginAna.response.body.token}}
+Content-Type: application/json
+
+{}
+
+### S3. El admin intenta solicitar → 400
+POST {{baseUrl}}/tareas/{{libre.response.body.id}}/solicitudes
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{}
+
+### S4. Solicitar una tarea que no existe → 409
+POST {{baseUrl}}/tareas/99999/solicitudes
+Authorization: Bearer {{loginAna.response.body.token}}
+Content-Type: application/json
+
+{}
+
+### S5. Ana ve sus solicitudes → 200 con tarea_titulo y usuario_nombre
+GET {{baseUrl}}/solicitudes/mias
+Authorization: Bearer {{loginAna.response.body.token}}
+
+### S6. Ana intenta ver la bandeja del admin → 403
+GET {{baseUrl}}/solicitudes
+Authorization: Bearer {{loginAna.response.body.token}}
+
+### S7. Admin ve las pendientes → 200
+GET {{baseUrl}}/solicitudes?estatus=pendiente
+Authorization: Bearer {{login.response.body.token}}
+
+### S8. Estatus inválido → 400
+GET {{baseUrl}}/solicitudes?estatus=otra
+Authorization: Bearer {{login.response.body.token}}
+
+### S9. Admin aprueba la de Ana → 204
+POST {{baseUrl}}/solicitudes/{{solAna.response.body.id}}/aprobar
+Authorization: Bearer {{login.response.body.token}}
+
+### S10. Aprobarla otra vez → 409 "ya fue resuelta"
+POST {{baseUrl}}/solicitudes/{{solAna.response.body.id}}/aprobar
+Authorization: Bearer {{login.response.body.token}}
+
+### S11. Ahora la tarea es de Ana: ella puede verla → 200 con su usuario_id
+GET {{baseUrl}}/tareas/{{libre.response.body.id}}
+Authorization: Bearer {{loginAna.response.body.token}}
+
+### S12. Ya no está disponible: solicitarla → 409
+POST {{baseUrl}}/tareas/{{libre.response.body.id}}/solicitudes
+Authorization: Bearer {{loginAna.response.body.token}}
+Content-Type: application/json
+
+{}
+
+### S13. Rechazar una solicitud que no existe → 404
+POST {{baseUrl}}/solicitudes/99999/rechazar
+Authorization: Bearer {{login.response.body.token}}

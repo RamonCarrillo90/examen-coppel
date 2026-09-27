@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -40,12 +39,6 @@ const columnasTarea = "id, usuario_id, titulo, descripcion, fecha_limite, estatu
 //	Si recibiera el struct sin puntero, recibiría una copia, y los datos se perderían al terminar la función.
 func escanearTarea(s scanner, t *models.Tarea) error {
 	return s.Scan(&t.ID, &t.UsuarioID, &t.Titulo, &t.Descripcion, &t.FechaLimite, &t.Estatus, &t.CreadoEn, &t.ActualizadoEn)
-}
-
-// EsViolacionFK indica si el error es una violacion a una llave foranea codigo (23503)
-func EsViolacionFK(err error) bool {
-	var pgErr *pgconn.PgError
-	return errors.As(err, &pgErr) && pgErr.Code == "23503"
 }
 
 // CrearTarea recibe un contexto y un modelo de tipo Tarea

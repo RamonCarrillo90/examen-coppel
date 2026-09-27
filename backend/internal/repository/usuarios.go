@@ -10,7 +10,6 @@ import (
 	"examen-coppel/backend/internal/models"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -70,7 +69,7 @@ func (r *UsuarioRepository) Crear(ctx context.Context, u *models.Usuario) error 
 		u.Nombre, u.Apellido, u.Email, u.Telefono, u.PasswordHash, u.Rol,
 	).Scan(&u.ID, &u.CreadoEn, &u.ActualizadoEn)
 
-	if esEmailDuplicado(err) {
+	if EsUniqueViolation(err) {
 		return ErrEmailDuplicado
 	}
 	if err != nil {
@@ -181,8 +180,8 @@ func (r *UsuarioRepository) Actualizar(ctx context.Context, u *models.Usuario) e
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNoEncontrado
 	}
-	// esEmailDuplicado verifica el campo  unique del email
-	if esEmailDuplicado(err) {
+	// EsUniqueViolation verifica el campo  unique del email
+	if EsUniqueViolation(err) {
 		return ErrEmailDuplicado
 	}
 	//Preveemos cualquier otro error
@@ -232,8 +231,8 @@ func (r *UsuarioRepository) Eliminar(ctx context.Context, id int) error {
 }
 
 // esEmailDuplicado indica si err es una violacion de la condicion UNIQUE
-// ponemos el codigo 23505 de postgreSQL es decir un email ya registrado
-func esEmailDuplicado(err error) bool {
-	var pgErr *pgconn.PgError
-	return errors.As(err, &pgErr) && pgErr.Code == "23505"
-}
+//// ponemos el codigo 23505 de postgreSQL es decir un email ya registrado
+//func esEmailDuplicado(err error) bool {
+//	var pgErr *pgconn.PgError
+//	return errors.As(err, &pgErr) && pgErr.Code == "23505"
+////}

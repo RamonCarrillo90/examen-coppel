@@ -69,6 +69,12 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () => import('./pages/tarea-form/tarea-form').then((m) => m.TareaForm),
     },
+    {
+        path: 'solicitudes',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+            import('./pages/solicitudes/solicitudes').then((m) => m.SolicitudesPagina),
+    },
     ],
 },
 { path: '**', redirectTo: '' },

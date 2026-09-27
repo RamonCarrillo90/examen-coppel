@@ -4,14 +4,15 @@ import { forkJoin } from 'rxjs';
 
 import { Tarea } from '../../core/models/tarea';
 import { Auth } from '../../core/services/auth';
+import { Solicitudes } from '../../core/services/solicitudes';
 import { Tareas } from '../../core/services/tareas';
 import { Usuarios } from '../../core/services/usuarios';
 
 /** Una tarjeta del menú: a dónde lleva y qué resumen muestra. */
 interface Tarjeta {
-    titulo: string;
-    resumen: string;
-    ruta: string;
+  titulo: string;
+  resumen: string;
+  ruta: string;
 }
 
 /**
@@ -27,6 +28,7 @@ interface Tarjeta {
 export class Inicio implements OnInit {
   private readonly usuariosService = inject(Usuarios);
   private readonly tareasService = inject(Tareas);
+  private readonly solicitudesService = inject(Solicitudes);
   protected readonly auth = inject(Auth);
 
   protected readonly tarjetas = signal<Tarjeta[]>([]);
@@ -42,11 +44,17 @@ export class Inicio implements OnInit {
       forkJoin({
         usuarios: this.usuariosService.listar(),
         tareas: this.tareasService.listar(),
+        pendientes: this.solicitudesService.listar('pendiente'),
       }).subscribe({
-        next: ({ usuarios, tareas }) =>
+        next: ({ usuarios, tareas, pendientes }) =>
           this.tarjetas.set([
             { titulo: 'Usuarios', resumen: plural(usuarios.length, 'usuario registrado', 'usuarios registrados'), ruta: '/usuarios' },
             { titulo: 'Tareas', resumen: resumenTareas(tareas, true), ruta: '/tareas' },
+            {
+              titulo: 'Solicitudes',
+              resumen: plural(pendientes.length, 'solicitud por revisar', 'solicitudes por revisar'),
+              ruta: '/solicitudes',
+            },
           ]),
         error: () => this.error.set('No se pudo cargar el resumen'),
       });

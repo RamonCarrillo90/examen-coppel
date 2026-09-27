@@ -1,0 +1,48 @@
+<div class="encabezado">
+  <h1>Solicitudes</h1>
+</div>
+<p class="ayuda">Usuarios que pidieron quedarse con una tarea disponible.</p>
+
+<div class="filtros">
+  <select [formControl]="estatus" aria-label="Estatus">
+    <option value="pendiente">Pendientes</option>
+    <option value="aprobada">Aprobadas</option>
+    <option value="rechazada">Rechazadas</option>
+    <option value="">Todas</option>
+  </select>
+</div>
+
+@if (error(); as mensaje) {
+  <p class="alerta">{{ mensaje }}</p>
+}
+@if (aviso(); as mensaje) {
+  <p class="alerta">{{ mensaje }}</p>
+}
+
+<table class="tabla" [class.cargando]="cargando()">
+  <thead>
+    <tr><th>Tarea</th><th>Solicitante</th><th>Fecha</th><th>Estatus</th><th>Acciones</th></tr>
+  </thead>
+  <tbody>
+    @for (s of solicitudes(); track s.id) {
+      <tr>
+        <td>{{ s.tarea_titulo }}</td>
+        <td><a [routerLink]="['/usuarios', s.usuario_id]">{{ s.usuario_nombre }}</a></td>
+        <td>{{ s.creado_en | date: 'dd/MM/yyyy HH:mm' }}</td>
+        <td><span class="etiqueta solicitud-{{ s.estatus }}">{{ etiquetas[s.estatus] }}</span></td>
+        <td>
+          @if (s.estatus === 'pendiente') {
+            <div class="acciones">
+              <button type="button" class="btn btn-chico" (click)="aprobar(s)">Aprobar</button>
+              <button type="button" class="btn btn-peligro btn-chico" (click)="rechazar(s)">Rechazar</button>
+            </div>
+          } @else {
+            —
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr><td colspan="5">{{ cargando() ? 'Cargando…' : 'No hay solicitudes con este estatus.' }}</td></tr>
+    }
+  </tbody>
+</table>

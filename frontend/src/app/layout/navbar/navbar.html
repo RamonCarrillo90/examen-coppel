@@ -6,6 +6,7 @@
     @if (auth.esAdmin()) {
       <a routerLink="/usuarios" routerLinkActive="activo">Usuarios</a>
       <a routerLink="/tareas" routerLinkActive="activo">Tareas</a>
+      <a routerLink="/solicitudes" routerLinkActive="activo">Solicitudes</a>
     } @else if (auth.usuario(); as u) {
       <a [routerLink]="['/usuarios', u.id]" routerLinkActive="activo">Mis tareas</a>
       <a routerLink="/disponibles" routerLinkActive="activo">Disponibles</a>

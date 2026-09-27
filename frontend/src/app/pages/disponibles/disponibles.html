@@ -1,7 +1,7 @@
 <div class="encabezado">
   <h1>Tareas disponibles</h1>
 </div>
-<p class="ayuda">Tareas que todavía no tienen a nadie asignado.</p>
+<p class="ayuda">Tareas que todavía no tienen a nadie asignado. Si te interesa una, solicítala y el administrador decidirá.</p>
 
 <div class="filtros">
   <input type="search" [formControl]="busqueda" placeholder="Buscar por título o descripción…" aria-label="Buscar" />
@@ -10,10 +10,13 @@
 @if (error(); as mensaje) {
   <p class="alerta">{{ mensaje }}</p>
 }
+@if (aviso(); as mensaje) {
+  <p class="alerta">{{ mensaje }}</p>
+}
 
 <table class="tabla" [class.cargando]="cargando()">
   <thead>
-    <tr><th>Título</th><th>Fecha límite</th></tr>
+    <tr><th>Título</th><th>Fecha límite</th><th></th></tr>
   </thead>
   <tbody>
     @for (t of tareas(); track t.id) {
@@ -25,9 +28,36 @@
           }
         </td>
         <td>{{ t.fecha_limite ? (t.fecha_limite | date: 'dd/MM/yyyy' : 'UTC') : '—' }}</td>
+        <td class="derecha">
+          @if (yaSolicitadas().has(t.id)) {
+            <span class="etiqueta estatus-pendiente">Solicitada</span>
+          } @else {
+            <button type="button" class="btn btn-chico" [disabled]="solicitando() === t.id" (click)="solicitar(t)">
+              {{ solicitando() === t.id ? 'Enviando…' : 'Solicitar' }}
+            </button>
+          }
+        </td>
       </tr>
     } @empty {
-      <tr><td colspan="2">{{ cargando() ? 'Cargando…' : 'No hay tareas disponibles por ahora.' }}</td></tr>
+      <tr><td colspan="3">{{ cargando() ? 'Cargando…' : 'No hay tareas disponibles por ahora.' }}</td></tr>
+    }
+  </tbody>
+</table>
+
+<h2 class="seccion">Mis solicitudes</h2>
+<table class="tabla">
+  <thead>
+    <tr><th>Tarea</th><th>Fecha de solicitud</th><th>Estatus</th></tr>
+  </thead>
+  <tbody>
+    @for (s of misSolicitudes(); track s.id) {
+      <tr>
+        <td>{{ s.tarea_titulo }}</td>
+        <td>{{ s.creado_en | date: 'dd/MM/yyyy HH:mm' }}</td>
+        <td><span class="etiqueta solicitud-{{ s.estatus }}">{{ etiquetas[s.estatus] }}</span></td>
+      </tr>
+    } @empty {
+      <tr><td colspan="3">Todavía no has solicitado ninguna tarea.</td></tr>
     }
   </tbody>
 </table>

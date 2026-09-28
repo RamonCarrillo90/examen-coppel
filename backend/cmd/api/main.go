@@ -65,6 +65,12 @@ func run() error {
 	if err := seed.CrearAdminSiNoExiste(ctx, usuarioRepo, cfg.AdminEmail, cfg.AdminPassword); err != nil {
 		return err
 	}
+	if os.Getenv("SEED_DEMO") == "true" {
+		if err := seed.Demo(ctx, usuarioRepo, tareaRepo); err != nil {
+			slog.Error("no se pudieron crear los datos de ejemplo", "error", err)
+			os.Exit(1)
+		}
+	}
 
 	// 4. Handlers (HTTP)
 	jwtSecret := []byte(cfg.JWTSecret)

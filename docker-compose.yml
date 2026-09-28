@@ -63,10 +63,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       TZ: America/Mazatlan
-    ports:
-      # Expuesto temporalmente para probar con Postman/curl.
-      # Cuando agreguemos Nginx, la API solo será accesible a través de él.
-      - "127.0.0.1:8080:8080"
+      SEED_DEMO: "true"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -76,6 +73,18 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
-
+  # ---------------------------------------------------------------------------
+  # Frontend: Angular compilado, servido por Nginx, que además hace de
+  # reverse proxy: /api/* se reenvía al servicio "api".
+  # Es el ÚNICO punto de entrada desde fuera: http://localhost
+  # ---------------------------------------------------------------------------
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-80}:80"
+    depends_on:
+      api:
+        condition: service_healthy
 volumes:
   pgdata:

@@ -26,7 +26,7 @@ func Demo(ctx context.Context, usuarios *repository.UsuarioRepository, tareas *r
 	tel := func(s string) *string { return &s }
 	nuevos := []*models.Usuario{
 		{Nombre: "Ramon", Apellido: "Carrillo", Email: "ramon@demo.com", Telefono: tel("4431608370"), PasswordHash: hash, Rol: models.RolUsuario},
-		{Nombre: "Jamzyne", Apellido: "Reyes", Email: "jazmyne@demo.com", Telefono: tel("6871268898"), PasswordHash: hash, Rol: models.RolUsuario},
+		{Nombre: "Jazmyne", Apellido: "Reyes", Email: "jazmyne@demo.com", Telefono: tel("6871268898"), PasswordHash: hash, Rol: models.RolUsuario},
 		{Nombre: "Theo", Apellido: "Carrillo", Email: "theo@demo.com", PasswordHash: hash, Rol: models.RolUsuario},
 	}
 
